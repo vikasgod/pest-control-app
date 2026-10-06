@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { authClient } from "../../lib/auth-client";
 import { type CrmRole, roleLabels } from "./roles";
+import LeadManagement from "./LeadManagement";
 
 const adminNav = [
   ["Overview", LayoutDashboard],
@@ -149,7 +150,7 @@ export default function CRM() {
             <h1 className="text-xl font-black">{active}</h1>
             <p className="text-xs text-slate-500">Manage your pest-control business</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-start">
             <div className="hidden items-center gap-2 rounded-xl border bg-white px-3 py-2 md:flex">
               <Search size={16} /><input className="w-40 outline-none" placeholder="Search..." />
             </div>
@@ -159,12 +160,31 @@ export default function CRM() {
               </Link>
             )}
             <div className="flex items-center gap-3">
-              <span className="text-sm font-semibold">{session.user.name} · {roleLabels[role]}</span>
-              <button onClick={() => authClient.signOut().then(() => router.push("/login"))} className="rounded-xl border px-3 py-2 text-sm font-bold">Sign out</button>
+              <span className="hidden text-sm font-semibold sm:inline">{session.user.name} · {roleLabels[role]}</span>
+              <button onClick={() => authClient.signOut().then(() => router.push("/login"))} className="whitespace-nowrap rounded-xl border px-3 py-2 text-sm font-bold">Sign out</button>
             </div>
           </div>
         </header>
-        <div className="p-5 md:p-8">
+        <nav aria-label="CRM sections" className="flex gap-2 overflow-x-auto border-b bg-white px-5 py-3 md:hidden">
+          {visibleNav.map(([name, Icon]) => (
+            <button
+              key={name}
+              onClick={() => setActive(name)}
+              aria-current={active === name ? "page" : undefined}
+              className={`flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold ${active === name ? "bg-emerald-100 text-emerald-900" : "text-slate-600 hover:bg-slate-100"}`}
+            >
+              <Icon size={16} />{name}
+            </button>
+          ))}
+          {role === "admin" && (
+            <Link href="/crm/blog/create" className="flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold text-slate-600 hover:bg-slate-100">
+              <Plus size={16} />Blog
+            </Link>
+          )}
+        </nav>
+        <div className="p-4 sm:p-5 md:p-8">
+          {active === "Leads" ? <LeadManagement /> : (
+            <>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[
               ["42", "Total Bookings", TrendingUp],
@@ -197,7 +217,7 @@ export default function CRM() {
                 </button>
               </div>
               <div className="mt-6 overflow-x-auto">
-                <table className="w-full text-left text-sm">
+                <table className="w-full min-w-[680px] text-left text-sm">
                   <thead className="border-b text-xs uppercase tracking-wider text-slate-400">
                     <tr><th className="pb-3">Booking</th><th className="pb-3">Customer</th><th className="pb-3">Service</th><th className="pb-3">Technician</th><th className="pb-3">Status</th><th /></tr>
                   </thead>
@@ -235,6 +255,8 @@ export default function CRM() {
               </div>
             </section>
           </div>
+            </>
+          )}
         </div>
       </main>
     </div>
