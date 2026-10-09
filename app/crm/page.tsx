@@ -21,6 +21,7 @@ import {
 import { authClient } from "../../lib/auth-client";
 import { type CrmRole, roleLabels } from "./roles";
 import LeadManagement from "./LeadManagement";
+import CustomerManagement from "./CustomerManagement";
 
 const adminNav = [
   ["Overview", LayoutDashboard],
@@ -183,7 +184,7 @@ export default function CRM() {
           )}
         </nav>
         <div className="p-4 sm:p-5 md:p-8">
-          {active === "Leads" ? <LeadManagement /> : (
+          {active === "Leads" ? <LeadManagement /> : active === "Customers" ? <CustomerManagement /> : (
             <>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[
