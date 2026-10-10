@@ -49,7 +49,7 @@ export const auth = betterAuth({
       role: {
         type: "string",
         required: false,
-        defaultValue: "user",
+        defaultValue: "customer",
         input: false,
       },
     },
@@ -65,17 +65,25 @@ export const auth = betterAuth({
               .map((entry) => entry.trim().toLowerCase())
               .filter(Boolean),
           );
-          const agentEmails = new Set(
-            (process.env.AGENT_EMAILS ?? "")
+          const managerEmails = new Set(
+            (process.env.MANAGER_EMAILS ?? "")
+              .split(",")
+              .map((entry) => entry.trim().toLowerCase())
+              .filter(Boolean),
+          );
+          const technicianEmails = new Set(
+            (process.env.TECHNICIAN_EMAILS ?? "")
               .split(",")
               .map((entry) => entry.trim().toLowerCase())
               .filter(Boolean),
           );
           const role = adminEmails.has(email)
             ? "admin"
-            : agentEmails.has(email)
-              ? "agent"
-              : "user";
+            : managerEmails.has(email)
+              ? "manager"
+              : technicianEmails.has(email)
+                ? "technician"
+                : "customer";
           return { data: { ...user, role } };
         },
       },

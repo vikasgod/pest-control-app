@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { type FormEvent, useMemo, useState } from "react";
 import {
   ArrowUpRight,
   CalendarDays,
@@ -9,8 +9,8 @@ import {
   MapPin,
   MessageSquareText,
   Phone,
+  Plus,
   Search,
-  ShieldCheck,
   Star,
   TrendingUp,
   WalletCards,
@@ -33,7 +33,7 @@ type Customer = {
   tags: string[];
 };
 
-const customers: Customer[] = [
+const initialCustomers: Customer[] = [
   {
     id: "CUST-2041",
     name: "Riya Kapoor",
@@ -118,8 +118,10 @@ const summaryCards = [
 ] as const;
 
 export default function CustomerManagement() {
+  const [customers, setCustomers] = useState(initialCustomers);
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState(customers[0].id);
+  const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
 
   const filteredCustomers = useMemo(() => {
     const searchValue = query.trim().toLowerCase();
@@ -133,6 +135,38 @@ export default function CustomerManagement() {
 
   const selectedCustomer = filteredCustomers.find((customer) => customer.id === selectedId) ?? filteredCustomers[0] ?? customers[0];
 
+  function addCustomer(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const name = String(formData.get("name") ?? "").trim();
+    const phone = String(formData.get("phone") ?? "").trim();
+    const email = String(formData.get("email") ?? "").trim();
+    const address = String(formData.get("address") ?? "").trim();
+    const service = String(formData.get("service") ?? "").trim();
+
+    if (!name || !phone || !email || !address || !service) return;
+
+    const newCustomer: Customer = {
+      id: `CUST-${2041 + customers.length}`,
+      name,
+      phone,
+      email,
+      address,
+      service,
+      status: "Active",
+      lastVisit: "No visits yet",
+      totalSpent: 0,
+      nps: 0,
+      nextAction: "Schedule first service",
+      tags: ["New customer"],
+    };
+
+    setCustomers((currentCustomers) => [newCustomer, ...currentCustomers]);
+    setSelectedId(newCustomer.id);
+    setQuery("");
+    setIsAddCustomerOpen(false);
+  }
+
   return (
     <section className="space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
@@ -141,8 +175,8 @@ export default function CustomerManagement() {
           <h2 className="mt-1 text-2xl font-black tracking-tight sm:text-3xl">Customer management</h2>
           <p className="mt-1 text-sm text-slate-500">Track service history, relationship health, and follow-ups for every customer.</p>
         </div>
-        <button className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-800">
-          <ShieldCheck size={17} /> Add customer
+        <button onClick={() => setIsAddCustomerOpen(true)} className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-800">
+          <Plus size={17} /> Add customer
         </button>
       </div>
 
@@ -326,7 +360,76 @@ export default function CustomerManagement() {
           </div>
         </div>
       </div>
+
+      {isAddCustomerOpen && (
+        <div
+          className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-slate-950/40 p-4"
+          onClick={() => setIsAddCustomerOpen(false)}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="add-customer-title"
+            className="my-auto w-full max-w-xl rounded-2xl bg-white p-5 shadow-2xl sm:p-7"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="mb-5">
+              <p className="text-sm font-semibold text-emerald-700">Customer profile</p>
+              <h3 id="add-customer-title" className="mt-1 text-xl font-black">Add a customer</h3>
+              <p className="mt-1 text-sm text-slate-500">Enter contact and service details to create a customer profile.</p>
+            </div>
+            <form onSubmit={addCustomer} className="grid gap-4 sm:grid-cols-2">
+              <CustomerFormField label="Customer name" name="name" placeholder="e.g. Riya Kapoor" />
+              <CustomerFormField label="Phone number" name="phone" type="tel" placeholder="+91 98765 43210" />
+              <CustomerFormField label="Email address" name="email" type="email" placeholder="name@example.com" />
+              <CustomerFormField label="Service required" name="service" placeholder="e.g. Termite Control" />
+              <label className="block text-sm font-semibold text-slate-700 sm:col-span-2">
+                Service address
+                <input
+                  name="address"
+                  required
+                  placeholder="Area, city"
+                  className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 font-normal outline-none placeholder:text-slate-400 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/10"
+                />
+              </label>
+              <div className="flex flex-col-reverse gap-2 pt-2 sm:col-span-2 sm:flex-row sm:justify-end">
+                <button type="button" onClick={() => setIsAddCustomerOpen(false)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50">
+                  Cancel
+                </button>
+                <button type="submit" className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-800">
+                  Save customer
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      )}
     </section>
+  );
+}
+
+function CustomerFormField({
+  label,
+  name,
+  placeholder,
+  type = "text",
+}: {
+  label: string;
+  name: string;
+  placeholder: string;
+  type?: string;
+}) {
+  return (
+    <label className="block text-sm font-semibold text-slate-700">
+      {label}
+      <input
+        name={name}
+        type={type}
+        required
+        placeholder={placeholder}
+        className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 font-normal outline-none placeholder:text-slate-400 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/10"
+      />
+    </label>
   );
 }
 

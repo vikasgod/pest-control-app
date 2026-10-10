@@ -4,48 +4,52 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  AlertCircle,
   CalendarCheck,
-  CheckCircle2,
   Clock3,
   IndianRupee,
   LayoutDashboard,
-  MoreHorizontal,
   Plus,
   Search,
   Settings,
+  ShieldCheck,
   TrendingUp,
   UserRound,
   Users,
 } from "lucide-react";
 import { authClient } from "../../lib/auth-client";
 import { type CrmRole, roleLabels } from "./roles";
-import LeadManagement from "./LeadManagement";
-import CustomerManagement from "./CustomerManagement";
+import { CrmModuleRenderer } from "../../components/CrmModuleRenderer";
 
 const adminNav = [
-  ["Overview", LayoutDashboard],
+  ["Dashboard", LayoutDashboard],
   ["Leads", Users],
-  ["Bookings", CalendarCheck],
   ["Customers", UserRound],
-  ["Technicians", UserRound],
-  ["Payments", IndianRupee],
+  ["Staff", UserRound],
   ["Services", Settings],
+  ["Jobs", CalendarCheck],
+  ["Payments", IndianRupee],
+  ["Reports", TrendingUp],
+  ["Settings", Settings],
+  ["Access", ShieldCheck],
 ] as const;
 
-const agentNav = [
-  ["Overview", LayoutDashboard],
+const managerNav = [
+  ["Dashboard", LayoutDashboard],
   ["Leads", Users],
-  ["Bookings", CalendarCheck],
-  ["Technicians", UserRound],
+  ["Customers", UserRound],
+  ["Staff", UserRound],
+  ["Schedule", CalendarCheck],
+  ["Job Assignments", CalendarCheck],
+  ["Follow-ups", Clock3],
 ] as const;
 
-const bookings = [
-  ["PC-10245", "Rahul Sharma", "Cockroach Control", "Today, 10:00 AM", "Rajesh", "Confirmed"],
-  ["PC-10244", "Priya Mehta", "Termite Control", "Today, 1:30 PM", "Amit", "Assigned"],
-  ["PC-10243", "Amit Verma", "Bed Bug Control", "Tomorrow, 11:00 AM", "Sunil", "Pending"],
-  ["PC-10242", "Neha Shah", "Mosquito Control", "Tomorrow, 4:00 PM", "Rajesh", "Completed"],
-];
+const technicianNav = [
+  ["Dashboard", LayoutDashboard],
+  ["Assigned Jobs", CalendarCheck],
+  ["Job Details", CalendarCheck],
+  ["Service Report", TrendingUp],
+  ["Profile", Settings],
+] as const;
 
 export default function CRM() {
   const router = useRouter();
@@ -55,10 +59,10 @@ export default function CRM() {
     ? (session.user as typeof session.user & { role?: string }).role
     : undefined;
   const role: CrmRole | null =
-    sessionRole === "admin" || sessionRole === "agent" || sessionRole === "user"
+    sessionRole === "admin" || sessionRole === "manager" || sessionRole === "technician" || sessionRole === "customer"
       ? sessionRole
       : session
-        ? "user"
+        ? "customer"
         : null;
 
   if (isPending) {
@@ -77,10 +81,10 @@ export default function CRM() {
     );
   }
 
-  if (role === "user") {
+  if (role === "customer") {
     return (
       <div className="min-h-screen bg-[#f5f8f7] p-5 text-[#102a33] md:p-10">
-        <main className="mx-auto max-w-3xl">
+        <main className="mx-auto max-w-4xl">
           <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
             <div>
               <Link href="/" className="text-2xl font-black">Pestora<span className="text-emerald-700">.</span></Link>
@@ -88,6 +92,7 @@ export default function CRM() {
             </div>
             <button onClick={() => authClient.signOut().then(() => router.push("/login"))} className="rounded-xl border px-4 py-2 text-sm font-bold">Sign out</button>
           </header>
+
           <section className="rounded-3xl border bg-white p-6 shadow-sm md:p-9">
             <div className="flex items-center gap-4">
               <div className="grid h-16 w-16 place-items-center rounded-full bg-emerald-100 text-emerald-800">
@@ -98,15 +103,42 @@ export default function CRM() {
                 <h1 className="text-2xl font-black">{session.user.name}</h1>
               </div>
             </div>
+
             <dl className="mt-8 grid gap-5 sm:grid-cols-2">
               <ProfileDetail label="Email" value={session.user.email} />
               <ProfileDetail label="Account type" value={roleLabels[role]} />
-              <ProfileDetail label="Phone" value="Not added yet" />
-              <ProfileDetail label="Service address" value="Not added yet" />
+              <ProfileDetail label="Phone" value="+91 98765 43210" />
+              <ProfileDetail label="Service address" value="Bandra West, Mumbai" />
             </dl>
-            <div className="mt-8 rounded-2xl bg-emerald-50 p-5">
-              <h2 className="font-black">Service details</h2>
-              <p className="mt-2 text-sm text-slate-600">Your service history will appear here when it is linked to your account.</p>
+
+            <div className="mt-8 grid gap-6 lg:grid-cols-2">
+              <div className="rounded-2xl bg-emerald-50 p-5">
+                <h2 className="font-black">Pest control service details</h2>
+                <ul className="mt-4 space-y-3 text-sm text-slate-700">
+                  <li><span className="font-bold text-slate-900">Issue:</span> Cockroach infestation in kitchen and storage area</li>
+                  <li><span className="font-bold text-slate-900">Property type:</span> 2 BHK apartment</li>
+                  <li><span className="font-bold text-slate-900">Preferred date:</span> Saturday, 10:30 AM</li>
+                  <li><span className="font-bold text-slate-900">Treatment plan:</span> Deep spray + preventive sealing</li>
+                </ul>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                <h2 className="font-black">Service journey</h2>
+                <div className="mt-4 space-y-4 text-sm text-slate-700">
+                  <div className="rounded-xl bg-white p-3 ring-1 ring-slate-200">
+                    <p className="font-bold text-slate-900">Lead generated</p>
+                    <p className="mt-1">Customer inquiry received and assigned to a manager.</p>
+                  </div>
+                  <div className="rounded-xl bg-white p-3 ring-1 ring-slate-200">
+                    <p className="font-bold text-slate-900">Inspection scheduled</p>
+                    <p className="mt-1">Site review by technician before final treatment plan.</p>
+                  </div>
+                  <div className="rounded-xl bg-white p-3 ring-1 ring-slate-200">
+                    <p className="font-bold text-slate-900">Follow-up care</p>
+                    <p className="mt-1">Post-treatment support and quarterly prevention check.</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </section>
         </main>
@@ -114,7 +146,7 @@ export default function CRM() {
     );
   }
 
-  const visibleNav = role === "admin" ? adminNav : agentNav;
+  const visibleNav = role === "admin" ? adminNav : role === "manager" ? managerNav : technicianNav;
   return (
     <div className="min-h-screen bg-[#f5f8f7] text-[#102a33]">
       <aside className="fixed hidden h-screen w-64 border-r bg-[#072f29] p-5 text-white md:block">
@@ -142,7 +174,9 @@ export default function CRM() {
         <div className="absolute bottom-6 left-5 right-5 rounded-2xl bg-white/10 p-4">
           <p className="text-xs text-white/50">Logged in as</p>
           <b>{roleLabels[role]}</b>
-          <p className="mt-1 text-xs text-emerald-300">{role === "admin" ? "Full access" : "Operations access"}</p>
+          <p className="mt-1 text-xs text-emerald-300">
+            {role === "admin" ? "Full access" : role === "manager" ? "Team oversight" : role === "technician" ? "Field operations" : "Customer access"}
+          </p>
         </div>
       </aside>
       <main className="md:ml-64">
@@ -184,80 +218,7 @@ export default function CRM() {
           )}
         </nav>
         <div className="p-4 sm:p-5 md:p-8">
-          {active === "Leads" ? <LeadManagement /> : active === "Customers" ? <CustomerManagement /> : (
-            <>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              ["42", "Total Bookings", TrendingUp],
-              ["18", "Pending Jobs", Clock3],
-              ["24", "Completed", CheckCircle2],
-              ["₹38,450", "Today Revenue", IndianRupee],
-            ].map(([value, label, Icon]) => {
-              const StatIcon = Icon as typeof TrendingUp;
-              return (
-                <div key={label as string} className="rounded-2xl border bg-white p-5 shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-500">{label as string}</span>
-                    <StatIcon size={18} className="text-emerald-700" />
-                  </div>
-                  <div className="mt-4 text-3xl font-black">{value as string}</div>
-                  <span className="mt-2 block text-xs font-bold text-emerald-700">+12% from last week</span>
-                </div>
-              );
-            })}
-          </div>
-          <div className="mt-7 grid gap-6 xl:grid-cols-[1.5fr_.8fr]">
-            <section className="rounded-2xl border bg-white p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-lg font-black">Recent bookings</h2>
-                  <p className="text-sm text-slate-500">Latest service requests</p>
-                </div>
-                <button className="flex items-center gap-2 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white">
-                  <Plus size={16} /> New Booking
-                </button>
-              </div>
-              <div className="mt-6 overflow-x-auto">
-                <table className="w-full min-w-[680px] text-left text-sm">
-                  <thead className="border-b text-xs uppercase tracking-wider text-slate-400">
-                    <tr><th className="pb-3">Booking</th><th className="pb-3">Customer</th><th className="pb-3">Service</th><th className="pb-3">Technician</th><th className="pb-3">Status</th><th /></tr>
-                  </thead>
-                  <tbody>
-                    {bookings.map((booking) => (
-                      <tr key={booking[0]} className="border-b last:border-0">
-                        <td className="py-4 font-bold">{booking[0]}<span className="block text-xs font-normal text-slate-400">{booking[3]}</span></td>
-                        <td className="py-4">{booking[1]}</td><td className="py-4">{booking[2]}</td><td className="py-4">{booking[4]}</td>
-                        <td className="py-4"><span className={`rounded-full px-2.5 py-1 text-xs font-bold ${booking[5] === "Completed" ? "bg-emerald-100 text-emerald-700" : booking[5] === "Pending" ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"}`}>{booking[5]}</span></td>
-                        <td><MoreHorizontal size={18} /></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </section>
-            <section className="rounded-2xl border bg-white p-6">
-              <h2 className="text-lg font-black">Lead pipeline</h2>
-              <p className="text-sm text-slate-500">This month&apos;s sales funnel</p>
-              <div className="mt-7 space-y-5">
-                {[
-                  ["New Leads", 124, "bg-slate-200"], ["Contacted", 86, "bg-blue-200"],
-                  ["Interested", 54, "bg-amber-200"], ["Quotation", 31, "bg-purple-200"], ["Converted", 24, "bg-emerald-500"],
-                ].map(([name, count, color]) => (
-                  <div key={name as string}>
-                    <div className="mb-2 flex justify-between text-sm"><span>{name}</span><b>{count}</b></div>
-                    <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-                      <div className={`h-full ${color}`} style={{ width: `${Math.min(((count as number) / 124) * 100, 100)}%` }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-8 rounded-xl bg-amber-50 p-4">
-                <div className="flex gap-3"><AlertCircle className="text-amber-600" size={19} /><div><b className="text-sm">Follow-up reminder</b><p className="mt-1 text-xs text-slate-600">8 leads have not been contacted in 24 hours.</p></div></div>
-              </div>
-            </section>
-          </div>
-            </>
-          )}
+          <CrmModuleRenderer active={active} role={role} managerName={session.user.name} />
         </div>
       </main>
     </div>

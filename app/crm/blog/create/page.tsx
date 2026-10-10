@@ -25,10 +25,10 @@ export default function CreateBlogPage() {
     ? (session.user as typeof session.user & { role?: string }).role
     : undefined;
   const role: CrmRole | null =
-    sessionRole === "admin" || sessionRole === "agent" || sessionRole === "user"
+    sessionRole === "admin" || sessionRole === "manager" || sessionRole === "technician" || sessionRole === "customer"
       ? sessionRole
       : session
-        ? "user"
+        ? "customer"
         : null;
 
   async function submitPost(event: FormEvent<HTMLFormElement>) {

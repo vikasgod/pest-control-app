@@ -1,7 +1,8 @@
-export type CrmRole = "admin" | "agent" | "user";
+export type CrmRole = "admin" | "manager" | "technician" | "customer";
 
 export const roleLabels: Record<CrmRole, string> = {
   admin: "Admin",
-  agent: "Agent",
-  user: "User",
+  manager: "Manager",
+  technician: "Technician",
+  customer: "Customer",
 };
