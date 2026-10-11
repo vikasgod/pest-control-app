@@ -1,22 +1,35 @@
 "use client";
 
-import { type FormEvent, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  ArrowUpRight,
   CalendarDays,
   CheckCircle2,
   Mail,
   MapPin,
   MessageSquareText,
   Phone,
-  Plus,
+  RefreshCw,
   Search,
-  Star,
-  TrendingUp,
   WalletCards,
 } from "lucide-react";
 
-type CustomerStatus = "Active" | "VIP" | "At risk";
+type Booking = {
+  id: string;
+  customerName: string;
+  phone: string;
+  email: string;
+  address: string;
+  categoryName: string;
+  serviceName: string;
+  price: number;
+  technicianName: string;
+  requestedService: string;
+  pincode: string;
+  date: string;
+  timeSlot: string;
+  status: "Pending" | "Confirmed" | "Cancelled";
+  createdAt: string;
+};
 
 type Customer = {
   id: string;
@@ -24,148 +37,120 @@ type Customer = {
   phone: string;
   email: string;
   address: string;
+  pincode: string;
   service: string;
-  status: CustomerStatus;
-  lastVisit: string;
-  totalSpent: number;
-  nps: number;
-  nextAction: string;
-  tags: string[];
+  status: "Active" | "Cancelled";
+  bookings: Booking[];
+  totalValue: number;
+  lastBooking: Booking;
 };
 
-const initialCustomers: Customer[] = [
-  {
-    id: "CUST-2041",
-    name: "Riya Kapoor",
-    phone: "+91 98765 48932",
-    email: "riya.kapoor@gmail.com",
-    address: "Andheri West, Mumbai",
-    service: "Cockroach Control",
-    status: "Active",
-    lastVisit: "6 days ago",
-    totalSpent: 18500,
-    nps: 92,
-    nextAction: "Schedule quarterly spray",
-    tags: ["Homeowner", "Repeat service", "Priority"],
-  },
-  {
-    id: "CUST-2042",
-    name: "Karan Mehta",
-    phone: "+91 98210 72981",
-    email: "karan.mehta@yahoo.com",
-    address: "Powai, Mumbai",
-    service: "Termite Inspection",
-    status: "VIP",
-    lastVisit: "2 days ago",
-    totalSpent: 32450,
-    nps: 96,
-    nextAction: "Send treatment summary",
-    tags: ["Commercial", "Premium plan", "High value"],
-  },
-  {
-    id: "CUST-2043",
-    name: "Sonia Nair",
-    phone: "+91 98198 11460",
-    email: "sonia.nair@outlook.com",
-    address: "Bandra East, Mumbai",
-    service: "Bed Bug Treatment",
-    status: "At risk",
-    lastVisit: "12 days ago",
-    totalSpent: 12600,
-    nps: 68,
-    nextAction: "Follow-up to confirm satisfaction",
-    tags: ["Needs attention", "Post-treatment check"],
-  },
-  {
-    id: "CUST-2044",
-    name: "Amit Shah",
-    phone: "+91 97644 83120",
-    email: "amit.shah@gmail.com",
-    address: "Malad West, Mumbai",
-    service: "Mosquito Control",
-    status: "Active",
-    lastVisit: "1 day ago",
-    totalSpent: 9800,
-    nps: 88,
-    nextAction: "Plan seasonal maintenance",
-    tags: ["Monsoon care", "Family plan"],
-  },
-];
+type BookingResponse = {
+  bookings?: Booking[];
+  error?: string;
+};
 
-const statusStyles: Record<CustomerStatus, string> = {
+const statusStyles: Record<Customer["status"], string> = {
   Active: "bg-emerald-50 text-emerald-700 ring-emerald-600/15",
-  VIP: "bg-violet-50 text-violet-700 ring-violet-600/15",
-  "At risk": "bg-amber-50 text-amber-700 ring-amber-600/15",
+  Cancelled: "bg-rose-50 text-rose-700 ring-rose-600/15",
 };
 
-const serviceHistory = [
-  { title: "Cockroach Control", date: "Apr 15, 2026", amount: "₹3,200", status: "Completed" },
-  { title: "Follow-up inspection", date: "Mar 08, 2026", amount: "₹1,100", status: "Completed" },
-  { title: "Mosquito treatment", date: "Feb 19, 2026", amount: "₹2,450", status: "Completed" },
-];
+function formatDate(date: string) {
+  const parsed = new Date(`${date}T00:00:00`);
+  return Number.isNaN(parsed.getTime())
+    ? date
+    : parsed.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+}
 
-const activityTimeline = [
-  "Reviewed the latest service report with the technician team.",
-  "Customer confirmed a recurring annual maintenance plan.",
-  "Sent payment reminder after a 9-day follow-up gap.",
-];
+function groupBookings(bookings: Booking[]): Customer[] {
+  const grouped = new Map<string, Booking[]>();
+  for (const booking of bookings) {
+    const key = booking.email.trim().toLowerCase() || booking.phone.replace(/\D/g, "");
+    const customerBookings = grouped.get(key) ?? [];
+    customerBookings.push(booking);
+    grouped.set(key, customerBookings);
+  }
 
-const summaryCards = [
-  { label: "Bookings", value: "12", detail: "This year", icon: CalendarDays, color: "bg-emerald-50 text-emerald-700" },
-  { label: "Avg. spend", value: "₹3,250", detail: "Per visit", icon: WalletCards, color: "bg-violet-50 text-violet-700" },
-  { label: "NPS", value: "92", detail: "Customer score", icon: Star, color: "bg-amber-50 text-amber-700" },
-  { label: "Retention", value: "94%", detail: "Repeat rate", icon: TrendingUp, color: "bg-sky-50 text-sky-700" },
-] as const;
+  return [...grouped.entries()].map(([key, customerBookings]) => {
+    const sortedBookings = [...customerBookings].sort((left, right) =>
+      new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
+    );
+    const lastBooking = sortedBookings[0];
+    return {
+      id: key,
+      name: lastBooking.customerName,
+      phone: lastBooking.phone,
+      email: lastBooking.email,
+      address: lastBooking.address,
+      pincode: lastBooking.pincode,
+      service: lastBooking.serviceName,
+      status: sortedBookings.some((booking) => booking.status !== "Cancelled") ? "Active" : "Cancelled",
+      bookings: sortedBookings,
+      totalValue: sortedBookings.reduce((total, booking) => total + booking.price, 0),
+      lastBooking,
+    };
+  }).sort((left, right) =>
+    new Date(right.lastBooking.createdAt).getTime() - new Date(left.lastBooking.createdAt).getTime(),
+  );
+}
 
 export default function CustomerManagement() {
-  const [customers, setCustomers] = useState(initialCustomers);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [query, setQuery] = useState("");
-  const [selectedId, setSelectedId] = useState(customers[0].id);
-  const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
+  const loadBookings = useCallback(async () => {
+    setIsLoading(true);
+    setError("");
+    try {
+      const response = await fetch("/api/bookings");
+      const result: BookingResponse = await response.json();
+      if (!response.ok || !result.bookings) {
+        throw new Error(result.error ?? "Unable to load customer bookings.");
+      }
+      setBookings(result.bookings);
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : "Unable to load customer bookings.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadBookings();
+  }, [loadBookings]);
+
+  const customers = useMemo(() => groupBookings(bookings), [bookings]);
   const filteredCustomers = useMemo(() => {
     const searchValue = query.trim().toLowerCase();
     if (!searchValue) return customers;
-
     return customers.filter((customer) => {
-      const haystack = `${customer.name} ${customer.phone} ${customer.service} ${customer.address}`.toLowerCase();
+      const haystack = `${customer.name} ${customer.phone} ${customer.email} ${customer.service} ${customer.address} ${customer.pincode}`.toLowerCase();
       return haystack.includes(searchValue);
     });
-  }, [query]);
+  }, [customers, query]);
+  const selectedCustomer =
+    filteredCustomers.find((customer) => customer.id === selectedId) ??
+    filteredCustomers[0];
 
-  const selectedCustomer = filteredCustomers.find((customer) => customer.id === selectedId) ?? filteredCustomers[0] ?? customers[0];
+  useEffect(() => {
+    if (selectedCustomer && selectedCustomer.id !== selectedId) {
+      setSelectedId(selectedCustomer.id);
+    }
+  }, [selectedCustomer, selectedId]);
 
-  function addCustomer(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const name = String(formData.get("name") ?? "").trim();
-    const phone = String(formData.get("phone") ?? "").trim();
-    const email = String(formData.get("email") ?? "").trim();
-    const address = String(formData.get("address") ?? "").trim();
-    const service = String(formData.get("service") ?? "").trim();
-
-    if (!name || !phone || !email || !address || !service) return;
-
-    const newCustomer: Customer = {
-      id: `CUST-${2041 + customers.length}`,
-      name,
-      phone,
-      email,
-      address,
-      service,
-      status: "Active",
-      lastVisit: "No visits yet",
-      totalSpent: 0,
-      nps: 0,
-      nextAction: "Schedule first service",
-      tags: ["New customer"],
-    };
-
-    setCustomers((currentCustomers) => [newCustomer, ...currentCustomers]);
-    setSelectedId(newCustomer.id);
-    setQuery("");
-    setIsAddCustomerOpen(false);
-  }
+  const totalBookingValue = selectedCustomer?.totalValue ?? 0;
+  const averageBookingValue = selectedCustomer && selectedCustomer.bookings.length > 0
+    ? Math.round(totalBookingValue / selectedCustomer.bookings.length)
+    : 0;
+  const summaryCards = [
+    { label: "Bookings", value: String(selectedCustomer?.bookings.length ?? 0), detail: "From service booking records", icon: CalendarDays, color: "bg-emerald-50 text-emerald-700" },
+    { label: "Booking value", value: `₹${totalBookingValue.toLocaleString("en-IN")}`, detail: "Total value, not payment status", icon: WalletCards, color: "bg-violet-50 text-violet-700" },
+    { label: "Average booking", value: `₹${averageBookingValue.toLocaleString("en-IN")}`, detail: "Per booking", icon: WalletCards, color: "bg-sky-50 text-sky-700" },
+    { label: "Last booking", value: selectedCustomer ? formatDate(selectedCustomer.lastBooking.date) : "—", detail: selectedCustomer?.lastBooking.timeSlot ?? "No booking yet", icon: CheckCircle2, color: "bg-amber-50 text-amber-700" },
+  ];
 
   return (
     <section className="space-y-6">
@@ -173,12 +158,14 @@ export default function CustomerManagement() {
         <div>
           <p className="text-sm font-semibold text-emerald-700">Customer hub</p>
           <h2 className="mt-1 text-2xl font-black tracking-tight sm:text-3xl">Customer management</h2>
-          <p className="mt-1 text-sm text-slate-500">Track service history, relationship health, and follow-ups for every customer.</p>
+          <p className="mt-1 text-sm text-slate-500">Customer profiles and service history from saved service bookings.</p>
         </div>
-        <button onClick={() => setIsAddCustomerOpen(true)} className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-800">
-          <Plus size={17} /> Add customer
+        <button onClick={() => void loadBookings()} disabled={isLoading} className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 disabled:opacity-50">
+          <RefreshCw size={17} /> {isLoading ? "Refreshing..." : "Refresh customers"}
         </button>
       </div>
+
+      {error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm font-semibold text-red-700">{error}</p>}
 
       <div className="grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
         <aside className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -194,14 +181,8 @@ export default function CustomerManagement() {
 
           <div className="mt-4 space-y-3">
             {filteredCustomers.map((customer) => {
-              const isSelected = customer.id === selectedCustomer.id;
-              const initials = customer.name
-                .split(" ")
-                .map((part) => part[0])
-                .slice(0, 2)
-                .join("")
-                .toUpperCase();
-
+              const isSelected = customer.id === selectedCustomer?.id;
+              const initials = customer.name.split(" ").map((part) => part[0]).slice(0, 2).join("").toUpperCase();
               return (
                 <button
                   key={customer.id}
@@ -209,15 +190,11 @@ export default function CustomerManagement() {
                   onClick={() => setSelectedId(customer.id)}
                   className={`flex w-full items-start gap-3 rounded-2xl border p-3 text-left transition ${isSelected ? "border-emerald-200 bg-emerald-50 shadow-sm" : "border-transparent bg-slate-50 hover:border-slate-200 hover:bg-white"}`}
                 >
-                  <div className="grid h-11 w-11 place-items-center rounded-xl bg-emerald-100 text-xs font-black text-emerald-800">
-                    {initials}
-                  </div>
+                  <div className="grid h-11 w-11 place-items-center rounded-xl bg-emerald-100 text-xs font-black text-emerald-800">{initials}</div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
                       <p className="truncate text-sm font-bold text-slate-800">{customer.name}</p>
-                      <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 ${statusStyles[customer.status]}`}>
-                        {customer.status}
-                      </span>
+                      <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 ${statusStyles[customer.status]}`}>{customer.status}</span>
                     </div>
                     <p className="mt-1 text-xs text-slate-500">{customer.service}</p>
                     <p className="mt-1 text-[11px] text-slate-400">{customer.phone}</p>
@@ -225,211 +202,143 @@ export default function CustomerManagement() {
                 </button>
               );
             })}
+            {!isLoading && filteredCustomers.length === 0 && (
+              <p className="rounded-xl bg-slate-50 p-5 text-center text-sm text-slate-500">
+                {customers.length ? "No customers match your search." : "No customer service bookings yet."}
+              </p>
+            )}
+            {isLoading && <p className="p-5 text-center text-sm text-slate-500">Loading customers...</p>}
           </div>
         </aside>
 
-        <div className="space-y-6">
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
-              <div className="flex items-center gap-4">
-                <div className="grid h-16 w-16 place-items-center rounded-2xl bg-emerald-100 text-xl font-black text-emerald-800">
-                  {selectedCustomer.name
-                    .split(" ")
-                    .map((part) => part[0])
-                    .slice(0, 2)
-                    .join("")
-                    .toUpperCase()}
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-2xl font-black text-[#102a33]">{selectedCustomer.name}</h3>
-                    <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold ring-1 ${statusStyles[selectedCustomer.status]}`}>
-                      {selectedCustomer.status}
-                    </span>
+        {selectedCustomer ? (
+          <div className="space-y-6">
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="grid h-16 w-16 place-items-center rounded-2xl bg-emerald-100 text-xl font-black text-emerald-800">
+                    {selectedCustomer.name.split(" ").map((part) => part[0]).slice(0, 2).join("").toUpperCase()}
                   </div>
-                  <p className="text-sm text-slate-500">Customer ID {selectedCustomer.id} • Last service {selectedCustomer.lastVisit}</p>
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="text-2xl font-black text-[#102a33]">{selectedCustomer.name}</h3>
+                      <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold ring-1 ${statusStyles[selectedCustomer.status]}`}>{selectedCustomer.status}</span>
+                    </div>
+                    <p className="text-sm text-slate-500">Customer from {selectedCustomer.bookings.length} service booking{selectedCustomer.bookings.length === 1 ? "" : "s"} · Last booking {formatDate(selectedCustomer.lastBooking.date)}</p>
+                  </div>
                 </div>
+                <a href={`tel:${selectedCustomer.phone}`} className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700">
+                  <Phone size={15} /> Call customer
+                </a>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <button className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700">Call</button>
-                <button className="rounded-xl bg-emerald-700 px-3 py-2 text-sm font-bold text-white">Schedule visit</button>
+
+              <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                {summaryCards.map(({ label, value, detail, icon: Icon, color }) => (
+                  <div key={label} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-slate-500">{label}</span>
+                      <span className={`grid h-10 w-10 place-items-center rounded-xl ${color}`}><Icon size={18} /></span>
+                    </div>
+                    <div className="mt-4 text-xl font-black text-[#102a33]">{value}</div>
+                    <p className="mt-1 text-xs text-slate-500">{detail}</p>
+                  </div>
+                ))}
               </div>
-            </div>
 
-            <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {summaryCards.map(({ label, value, detail, icon: Icon, color }) => (
-                <div key={label} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-500">{label}</span>
-                    <span className={`grid h-10 w-10 place-items-center rounded-xl ${color}`}><Icon size={18} /></span>
-                  </div>
-                  <div className="mt-4 text-2xl font-black text-[#102a33]">{value}</div>
-                  <p className="mt-1 text-xs text-slate-500">{detail}</p>
+              <div className="mt-6 grid gap-6 xl:grid-cols-[1.2fr_.8fr]">
+                <div className="space-y-6">
+                  <section className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                    <div className="mb-4 flex items-center justify-between">
+                      <h4 className="text-lg font-black text-[#102a33]">Profile</h4>
+                    </div>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <InfoRow icon={Phone} label="Phone" value={selectedCustomer.phone} />
+                      <InfoRow icon={Mail} label="Email" value={selectedCustomer.email} />
+                      <InfoRow icon={MapPin} label="Address" value={selectedCustomer.address} />
+                      <InfoRow icon={CheckCircle2} label="Service" value={`${selectedCustomer.service} · ${selectedCustomer.pincode}`} />
+                    </div>
+                  </section>
+
+                  <section className="rounded-2xl border border-slate-200 bg-white p-5">
+                    <div className="mb-4 flex items-center justify-between">
+                      <h4 className="text-lg font-black text-[#102a33]">Service history</h4>
+                      <span className="text-sm text-slate-500">{selectedCustomer.bookings.length} booking(s)</span>
+                    </div>
+                    <div className="space-y-3">
+                      {selectedCustomer.bookings.map((booking) => (
+                        <div key={booking.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                          <div>
+                            <p className="font-bold text-slate-800">{booking.serviceName}</p>
+                            <p className="mt-1 text-xs text-slate-500">{formatDate(booking.date)} · {booking.timeSlot} · {booking.technicianName}</p>
+                            <p className="mt-1 text-xs text-slate-500">Booking {booking.id}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-black text-[#102a33]">₹{booking.price.toLocaleString("en-IN")}</p>
+                            <p className={`mt-1 text-[11px] font-bold ${booking.status === "Cancelled" ? "text-rose-700" : booking.status === "Confirmed" ? "text-emerald-700" : "text-amber-700"}`}>{booking.status}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
                 </div>
-              ))}
-            </div>
 
-            <div className="mt-6 grid gap-6 xl:grid-cols-[1.2fr_.8fr]">
-              <div className="space-y-6">
-                <section className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                  <div className="mb-4 flex items-center justify-between">
-                    <h4 className="text-lg font-black text-[#102a33]">Profile</h4>
-                    <button className="text-sm font-bold text-emerald-700">Edit</button>
-                  </div>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <InfoRow icon={Phone} label="Phone" value={selectedCustomer.phone} />
-                    <InfoRow icon={Mail} label="Email" value={selectedCustomer.email} />
-                    <InfoRow icon={MapPin} label="Address" value={selectedCustomer.address} />
-                    <InfoRow icon={CheckCircle2} label="Service" value={selectedCustomer.service} />
-                  </div>
-                  <div className="mt-5 flex flex-wrap gap-2">
-                    {selectedCustomer.tags.map((tag) => (
-                      <span key={tag} className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-slate-600 ring-1 ring-slate-200">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </section>
-
-                <section className="rounded-2xl border border-slate-200 bg-white p-5">
-                  <div className="mb-4 flex items-center justify-between">
-                    <h4 className="text-lg font-black text-[#102a33]">Service history</h4>
-                    <button className="inline-flex items-center gap-1 text-sm font-bold text-emerald-700">
-                      View all <ArrowUpRight size={15} />
-                    </button>
-                  </div>
-                  <div className="space-y-3">
-                    {serviceHistory.map((item) => (
-                      <div key={item.title} className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                        <div>
-                          <p className="font-bold text-slate-800">{item.title}</p>
-                          <p className="mt-1 text-xs text-slate-500">{item.date}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-black text-[#102a33]">{item.amount}</p>
-                          <p className="mt-1 text-[11px] font-bold text-emerald-700">{item.status}</p>
-                        </div>
+                <div className="space-y-6">
+                  <section className="rounded-2xl border border-slate-200 bg-white p-5">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-lg font-black text-[#102a33]">Booking value summary</h4>
+                      <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-700">From bookings</span>
+                    </div>
+                    <div className="mt-5">
+                      <p className="text-sm text-slate-500">Total booking value</p>
+                      <p className="mt-2 text-3xl font-black text-[#102a33]">₹{selectedCustomer.totalValue.toLocaleString("en-IN")}</p>
+                      <p className="mt-1 text-xs text-slate-500">Booking amounts; payment collection is not recorded here.</p>
+                    </div>
+                    <div className="mt-5 space-y-3">
+                      <div className="flex items-center justify-between rounded-xl bg-slate-50 p-3">
+                        <span className="text-sm text-slate-500">Latest booking</span>
+                        <span className="font-bold text-slate-800">{formatDate(selectedCustomer.lastBooking.date)}</span>
                       </div>
-                    ))}
-                  </div>
-                </section>
-              </div>
-
-              <div className="space-y-6">
-                <section className="rounded-2xl border border-slate-200 bg-white p-5">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-lg font-black text-[#102a33]">Payment summary</h4>
-                    <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700">Paid</span>
-                  </div>
-                  <div className="mt-5">
-                    <p className="text-sm text-slate-500">Total spent</p>
-                    <p className="mt-2 text-3xl font-black text-[#102a33]">₹{selectedCustomer.totalSpent.toLocaleString("en-IN")}</p>
-                  </div>
-                  <div className="mt-5 space-y-3">
-                    <div className="flex items-center justify-between rounded-xl bg-slate-50 p-3">
-                      <span className="text-sm text-slate-500">Last invoice</span>
-                      <span className="font-bold text-slate-800">₹5,200</span>
+                      <div className="flex items-center justify-between rounded-xl bg-slate-50 p-3">
+                        <span className="text-sm text-slate-500">Technician</span>
+                        <span className="font-bold text-slate-800">{selectedCustomer.lastBooking.technicianName}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between rounded-xl bg-slate-50 p-3">
-                      <span className="text-sm text-slate-500">Next billing</span>
-                      <span className="font-bold text-slate-800">May 14</span>
-                    </div>
-                  </div>
-                </section>
+                  </section>
 
-                <section className="rounded-2xl border border-slate-200 bg-white p-5">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-lg font-black text-[#102a33]">Customer notes</h4>
-                    <MessageSquareText size={18} className="text-emerald-700" />
-                  </div>
-                  <div className="mt-4 rounded-2xl bg-emerald-50 p-4">
-                    <p className="text-sm font-bold text-emerald-800">Next action</p>
-                    <p className="mt-2 text-sm text-slate-600">{selectedCustomer.nextAction}</p>
-                  </div>
-                  <ul className="mt-5 space-y-3">
-                    {activityTimeline.map((item) => (
-                      <li key={item} className="flex gap-3 rounded-xl bg-slate-50 p-3">
+                  <section className="rounded-2xl border border-slate-200 bg-white p-5">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-lg font-black text-[#102a33]">Latest booking details</h4>
+                      <MessageSquareText size={18} className="text-emerald-700" />
+                    </div>
+                    <div className="mt-4 rounded-2xl bg-emerald-50 p-4">
+                      <p className="text-sm font-bold text-emerald-800">{selectedCustomer.lastBooking.serviceName}</p>
+                      <p className="mt-2 text-sm text-slate-600">{selectedCustomer.lastBooking.categoryName} · {selectedCustomer.lastBooking.status}</p>
+                      <p className="mt-2 text-sm text-slate-600">{selectedCustomer.lastBooking.address} · {selectedCustomer.lastBooking.pincode}</p>
+                    </div>
+                    <ul className="mt-5 space-y-3">
+                      <li className="flex gap-3 rounded-xl bg-slate-50 p-3">
                         <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-500" />
-                        <p className="text-sm text-slate-600">{item}</p>
+                        <p className="text-sm text-slate-600">Scheduled {formatDate(selectedCustomer.lastBooking.date)} during {selectedCustomer.lastBooking.timeSlot}.</p>
                       </li>
-                    ))}
-                  </ul>
-                </section>
+                      <li className="flex gap-3 rounded-xl bg-slate-50 p-3">
+                        <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-500" />
+                        <p className="text-sm text-slate-600">Assigned technician: {selectedCustomer.lastBooking.technicianName}.</p>
+                      </li>
+                    </ul>
+                  </section>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
-
-      {isAddCustomerOpen && (
-        <div
-          className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-slate-950/40 p-4"
-          onClick={() => setIsAddCustomerOpen(false)}
-        >
-          <section
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="add-customer-title"
-            className="my-auto w-full max-w-xl rounded-2xl bg-white p-5 shadow-2xl sm:p-7"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="mb-5">
-              <p className="text-sm font-semibold text-emerald-700">Customer profile</p>
-              <h3 id="add-customer-title" className="mt-1 text-xl font-black">Add a customer</h3>
-              <p className="mt-1 text-sm text-slate-500">Enter contact and service details to create a customer profile.</p>
+        ) : (
+          !isLoading && !error && (
+            <div className="grid min-h-72 place-items-center rounded-3xl border border-slate-200 bg-white p-8 text-center text-slate-500">
+              Select a customer with a service booking to view their details.
             </div>
-            <form onSubmit={addCustomer} className="grid gap-4 sm:grid-cols-2">
-              <CustomerFormField label="Customer name" name="name" placeholder="e.g. Riya Kapoor" />
-              <CustomerFormField label="Phone number" name="phone" type="tel" placeholder="+91 98765 43210" />
-              <CustomerFormField label="Email address" name="email" type="email" placeholder="name@example.com" />
-              <CustomerFormField label="Service required" name="service" placeholder="e.g. Termite Control" />
-              <label className="block text-sm font-semibold text-slate-700 sm:col-span-2">
-                Service address
-                <input
-                  name="address"
-                  required
-                  placeholder="Area, city"
-                  className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 font-normal outline-none placeholder:text-slate-400 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/10"
-                />
-              </label>
-              <div className="flex flex-col-reverse gap-2 pt-2 sm:col-span-2 sm:flex-row sm:justify-end">
-                <button type="button" onClick={() => setIsAddCustomerOpen(false)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50">
-                  Cancel
-                </button>
-                <button type="submit" className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-800">
-                  Save customer
-                </button>
-              </div>
-            </form>
-          </section>
-        </div>
-      )}
+          )
+        )}
+      </div>
     </section>
-  );
-}
-
-function CustomerFormField({
-  label,
-  name,
-  placeholder,
-  type = "text",
-}: {
-  label: string;
-  name: string;
-  placeholder: string;
-  type?: string;
-}) {
-  return (
-    <label className="block text-sm font-semibold text-slate-700">
-      {label}
-      <input
-        name={name}
-        type={type}
-        required
-        placeholder={placeholder}
-        className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 font-normal outline-none placeholder:text-slate-400 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/10"
-      />
-    </label>
   );
 }
 
@@ -439,9 +348,9 @@ function InfoRow({ icon: Icon, label, value }: { icon: typeof Phone; label: stri
       <span className="mt-0.5 grid h-9 w-9 place-items-center rounded-xl bg-emerald-50 text-emerald-700">
         <Icon size={16} />
       </span>
-      <div>
+      <div className="min-w-0">
         <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">{label}</p>
-        <p className="mt-1 text-sm font-semibold text-slate-800">{value}</p>
+        <p className="mt-1 break-words text-sm font-semibold text-slate-800">{value}</p>
       </div>
     </div>
   );

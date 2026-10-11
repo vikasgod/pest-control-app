@@ -13,6 +13,7 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import BookingCard from "./bookingCard";
+import QuoteRequestModal from "./QuoteRequestModal";
 import { blogPosts } from "../app/blog/posts";
 const services = [
   [
@@ -50,17 +51,12 @@ function HomeContent() {
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
               <a
-                href="#booking"
+                href="/search"
                 className="rounded-xl bg-emerald-700 px-6 py-4 font-bold text-white"
               >
                 Book Treatment <ArrowRight className="ml-2 inline" size={17} />
               </a>
-              <a
-                href="#how"
-                className="rounded-xl border border-slate-300 bg-white px-6 py-4 font-bold"
-              >
-                See how it works
-              </a>
+              <QuoteRequestModal />
             </div>
             <div className="mt-8 flex flex-wrap gap-7 text-sm">
               <span>
@@ -299,112 +295,9 @@ function HomeContent() {
         >
           View all guides <ArrowRight size={16} />
         </Link>
-      </section> 
+      </section>
     </div>
   );
 }
 
 export default HomeContent;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

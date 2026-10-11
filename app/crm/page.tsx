@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import {
   CalendarCheck,
   Clock3,
-  IndianRupee,
   LayoutDashboard,
   Plus,
   Search,
@@ -26,11 +25,8 @@ const adminNav = [
   ["Customers", UserRound],
   ["Staff", UserRound],
   ["Services", Settings],
-  ["Jobs", CalendarCheck],
-  ["Payments", IndianRupee],
+  ["Bookings", CalendarCheck],
   ["Reports", TrendingUp],
-  ["Settings", Settings],
-  ["Access", ShieldCheck],
 ] as const;
 
 const managerNav = [
@@ -39,12 +35,13 @@ const managerNav = [
   ["Customers", UserRound],
   ["Staff", UserRound],
   ["Schedule", CalendarCheck],
-  ["Job Assignments", CalendarCheck],
+  ["Bookings", CalendarCheck],
   ["Follow-ups", Clock3],
 ] as const;
 
 const technicianNav = [
   ["Dashboard", LayoutDashboard],
+  ["Assigned Leads", Users],
   ["Assigned Jobs", CalendarCheck],
   ["Job Details", CalendarCheck],
   ["Service Report", TrendingUp],

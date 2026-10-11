@@ -42,7 +42,7 @@ export default function Header() {
 						<small className="text-slate-500">24/7 Support</small>
 					</div>
 					<Link
-						href="/#booking"
+						href="/search"
 						className="rounded-xl bg-emerald-700 px-3 py-2.5 text-xs font-bold text-white shadow-lg shadow-emerald-700/20 sm:px-5 sm:py-3 sm:text-sm"
 					>
 						<span className="sm:hidden">Book</span>
