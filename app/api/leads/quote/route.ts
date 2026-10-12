@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { auth } from "../../../../lib/auth";
 import { connectToDatabase } from "../../../../lib/mongodb";
 import { createQuoteToken, hashQuoteToken } from "../../../../lib/quote-token";
+import { createSmtpMailer } from "../../../../lib/email";
 import LeadModel from "../../../../models/Lead";
 
 export const runtime = "nodejs";
@@ -42,9 +43,11 @@ export async function POST(request: Request) {
       return errorResponse("Enter a valid quotation amount and treatment details.", 400);
     }
 
-    const apiKey = process.env.RESEND_API_KEY;
-    const from = process.env.AUTH_EMAIL_FROM;
-    if (!apiKey || !from) {
+    let mailer: ReturnType<typeof createSmtpMailer>;
+    try {
+      mailer = createSmtpMailer();
+    } catch (error) {
+      console.error("Quotation email SMTP configuration error:", error);
       return errorResponse("Quotation email is not configured on the server.", 503);
     }
 
@@ -116,27 +119,16 @@ export async function POST(request: Request) {
     }
 
     try {
-      const emailResponse = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          from,
-          to: [lead.email],
-          subject: "Your Pestora service quotation",
-          text: emailText,
-        }),
+      await mailer.transporter.sendMail({
+        from: mailer.from,
+        to: lead.email,
+        subject: "Your Pestquro service quotation",
+        text: emailText,
       });
-      if (!emailResponse.ok) {
-        console.error("Quotation email delivery failed:", await emailResponse.text());
-        await releaseQuoteReservation();
-        return errorResponse("Unable to send the quotation email. Please try again.", 502);
-      }
     } catch (emailError) {
+      console.error("Quotation email delivery failed:", emailError);
       await releaseQuoteReservation();
-      throw emailError;
+      return errorResponse("Unable to send the quotation email. Please try again.", 502);
     }
 
     return NextResponse.json({ lead: { id: reservedLead.id, status: reservedLead.status } });

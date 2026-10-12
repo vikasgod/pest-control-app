@@ -68,7 +68,7 @@ export default function CustomBlogArticle({ slug }: { slug: string }) {
             </div>
             <div className="mt-14 rounded-2xl bg-emerald-50 p-6 md:p-8">
               <h2 className="text-2xl font-black">Need help with a pest problem?</h2>
-              <p className="mt-2 leading-7 text-slate-600">Pestora can help you find the right treatment for your home.</p>
+              <p className="mt-2 leading-7 text-slate-600">Pestquro can help you find the right treatment for your home.</p>
               <Link href="/#booking" className="mt-5 inline-flex items-center gap-2 font-bold text-emerald-700">Book a treatment <ArrowRight size={16} /></Link>
             </div>
             <Link href="/blog" className="mt-10 inline-flex items-center gap-2 font-bold text-emerald-700"><ArrowLeft size={17} />Back to all guides</Link>

@@ -6,7 +6,7 @@ function Footer() {
     <footer className="bg-[#071f29] py-12 text-white">
       <div className="mx-auto w-full max-w-[1180px] px-6 grid gap-10 md:grid-cols-4">
         <div>
-          <div className="text-2xl font-black">Pestora</div>
+          <div className="text-2xl font-black">Pestquro</div>
           <p className="mt-3 text-sm leading-6 text-white/60">
             Professional pest control with a better customer experience.
           </p>
@@ -37,7 +37,7 @@ function Footer() {
         </div>
       </div>
       <div className="mx-auto w-full max-w-[1180px] px-6 mt-10 border-t border-white/10 pt-5 text-xs text-white/40">
-        © 2026 Pestora. Built for a modern pest-control business.
+        © 2026 Pestquro. Built for a modern pest-control business.
       </div>
     </footer>
   );

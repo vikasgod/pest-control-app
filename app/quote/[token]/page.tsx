@@ -55,11 +55,11 @@ export default function CustomerQuotePage() {
   return (
     <main className="grid min-h-screen place-items-center bg-[#f5f8f7] px-4 py-10 text-[#102a33]">
       <section className="w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-9">
-        <Link href="/" className="text-sm font-bold text-emerald-700">Pestora.</Link>
+        <Link href="/" className="text-sm font-bold text-emerald-700">Pestquro.</Link>
         {decision ? (
           <div role="status" className="mt-8 rounded-2xl bg-emerald-50 p-5">
             <h1 className="text-2xl font-black">{decision === "Accepted" ? "Quotation accepted" : "Quotation declined"}</h1>
-            <p className="mt-2 text-sm text-slate-700">Thank you. Pestora has recorded your response and the service team will follow up with you.</p>
+            <p className="mt-2 text-sm text-slate-700">Thank you. Pestquro has recorded your response and the service team will follow up with you.</p>
           </div>
         ) : quote ? (
           <>

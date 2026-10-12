@@ -47,21 +47,19 @@ export default function AuthForm({
           email,
           password,
           username,
-          callbackURL: "/crm",
+          callbackURL: "/auth/redirect",
         });
         if (result.error) throw new Error(result.error.message ?? "Unable to register.");
-        router.push("/crm");
-        router.refresh();
+        await redirectAfterSignIn();
       } else if (mode === "login") {
         const username = String(form.get("username") ?? "").trim();
         const result = await authClient.signIn.username({
           username,
           password,
-          callbackURL: "/crm",
+          callbackURL: "/auth/redirect",
         });
         if (result.error) throw new Error(result.error.message ?? "Email or password is incorrect.");
-        router.push("/crm");
-        router.refresh();
+        await redirectAfterSignIn();
       } else if (mode === "forgot-password") {
         const result = await authClient.requestPasswordReset({
           email,
@@ -77,6 +75,7 @@ export default function AuthForm({
         const result = await authClient.resetPassword({ newPassword, token: resetToken });
         if (result.error) throw new Error(result.error.message ?? "Unable to reset password.");
         setMessage("Your password has been changed. You can now sign in.");
+        window.setTimeout(() => router.push("/login"), 1000);
       }
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Something went wrong. Please try again.");
@@ -90,12 +89,27 @@ export default function AuthForm({
     try {
       const result = await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/crm",
+        callbackURL: "/auth/redirect",
       });
       if (result.error) setError(result.error.message ?? "Unable to start Google sign-in.");
     } catch (signInError) {
       setError(signInError instanceof Error ? signInError.message : "Unable to start Google sign-in.");
     }
+  }
+
+  async function redirectAfterSignIn() {
+    const { data: session, error: sessionError } = await authClient.getSession();
+    if (sessionError) {
+      throw new Error(sessionError.message ?? "Unable to load your account.");
+    }
+    if (!session) {
+      throw new Error("Sign-in succeeded, but your account could not be loaded.");
+    }
+
+    const role = (session.user as typeof session.user & { role?: string }).role;
+    const isStaff = role === "admin" || role === "manager" || role === "technician";
+    router.replace(isStaff ? "/crm" : "/");
+    router.refresh();
   }
 
   const needsEmail = mode === "register" || mode === "forgot-password";
@@ -105,11 +119,11 @@ export default function AuthForm({
     <main className="grid min-h-screen place-items-center bg-[radial-gradient(circle_at_75%_25%,#d8f7e8,transparent_35%),linear-gradient(120deg,#effaf5,#fff)] p-5">
       <section className="w-full max-w-md rounded-3xl border border-slate-100 bg-white p-7 shadow-xl md:p-9">
         <Link href="/" className="inline-flex items-center gap-2 font-black text-emerald-800">
-          <ShieldCheck size={23} />Pestora
+          <ShieldCheck size={23} />Pestquro
         </Link>
         <h1 className="mt-7 text-3xl font-black">{titles[mode]}</h1>
         <p className="mt-2 text-sm text-slate-600">
-          {mode === "register" ? "Sign up to view your Pestora profile and services." : "Securely access your Pestora account."}
+          {mode === "register" ? "Sign up to view your Pestquro profile and services." : "Securely access your Pestquro account."}
         </p>
         {(mode === "login" || mode === "register") && googleEnabled && (
           <>

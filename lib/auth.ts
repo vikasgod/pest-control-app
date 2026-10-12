@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { username } from "better-auth/plugins";
 import { getAuthDatabase } from "./auth-database";
+import { sendSmtpEmail } from "./email";
 
 export const auth = betterAuth({
   database: mongodbAdapter(getAuthDatabase()),
@@ -9,28 +10,14 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     sendResetPassword: async ({ user, url }) => {
-      const apiKey = process.env.RESEND_API_KEY;
-      const from = process.env.AUTH_EMAIL_FROM;
-      if (!apiKey || !from) {
-        throw new Error("Password reset email is not configured on the server.");
-      }
-
-      const response = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          from,
-          to: [user.email],
-          subject: "Reset your Pestora password",
-          text: `Use this secure link to reset your Pestora password: ${url}\n\nIf you did not request this, you can ignore this email.`,
-        }),
-      });
-
-      if (!response.ok) {
-        console.error("Password reset email delivery failed:", await response.text());
+      try {
+        await sendSmtpEmail({
+          to: user.email,
+          subject: "Reset your Pestquro password",
+          text: `Use this secure link to reset your Pestquro password: ${url}\n\nIf you did not request this, you can ignore this email.`,
+        });
+      } catch (error) {
+        console.error("Password reset email delivery failed:", error);
         throw new Error("Unable to send password reset email.");
       }
     },

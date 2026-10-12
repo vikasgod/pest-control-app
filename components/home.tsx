@@ -115,7 +115,7 @@ function HomeContent() {
         <div className="mx-auto w-full max-w-[1180px] px-6 grid gap-14 lg:grid-cols-2 lg:items-center">
           <div>
             <p className="font-black uppercase tracking-widest text-emerald-300">
-              Why Pestora
+              Why Pestquro
             </p>
             <h2 className="mt-3 text-4xl font-black md:text-5xl">
               More than pest control.{" "}
@@ -234,7 +234,7 @@ function HomeContent() {
               ],
               [
                 "Amit Verma",
-                "“Professional team and excellent follow-up. I would definitely use Pestora again.”",
+                "“Professional team and excellent follow-up. I would definitely use Pestquro again.”",
               ],
             ].map(([n, q]) => (
               <article key={n} className="rounded-2xl bg-white p-7 shadow-sm">
@@ -251,7 +251,7 @@ function HomeContent() {
       </section>
       <section id="blog" className="mx-auto w-full max-w-[1180px] px-6 py-20">
         <p className="font-black uppercase tracking-widest text-emerald-700">
-          Pestora Journal
+          Pestquro Journal
         </p>
         <h2 className="mt-2 text-4xl font-black">
           Helpful guides for a healthier home.

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -62,6 +62,12 @@ export default function CRM() {
         ? "customer"
         : null;
 
+  useEffect(() => {
+    if (!isPending && role === "customer") {
+      router.replace("/");
+    }
+  }, [isPending, role, router]);
+
   if (isPending) {
     return <main className="grid min-h-screen place-items-center">Loading CRM...</main>;
   }
@@ -70,7 +76,7 @@ export default function CRM() {
     return (
       <main className="grid min-h-screen place-items-center bg-[#f5f8f7] p-6">
         <section className="max-w-md rounded-3xl border bg-white p-8 text-center shadow-sm">
-          <h1 className="text-2xl font-black">Sign in to Pestora CRM</h1>
+          <h1 className="text-2xl font-black">Sign in to Pestquro CRM</h1>
           <p className="mt-2 text-slate-600">Log in to view your account and services.</p>
           <Link href="/login" className="mt-6 inline-flex rounded-xl bg-emerald-700 px-5 py-3 font-bold text-white">Sign in</Link>
         </section>
@@ -79,75 +85,14 @@ export default function CRM() {
   }
 
   if (role === "customer") {
-    return (
-      <div className="min-h-screen bg-[#f5f8f7] p-5 text-[#102a33] md:p-10">
-        <main className="mx-auto max-w-4xl">
-          <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <Link href="/" className="text-2xl font-black">Pestora<span className="text-emerald-700">.</span></Link>
-              <p className="text-sm text-slate-500">Your customer profile</p>
-            </div>
-            <button onClick={() => authClient.signOut().then(() => router.push("/login"))} className="rounded-xl border px-4 py-2 text-sm font-bold">Sign out</button>
-          </header>
-
-          <section className="rounded-3xl border bg-white p-6 shadow-sm md:p-9">
-            <div className="flex items-center gap-4">
-              <div className="grid h-16 w-16 place-items-center rounded-full bg-emerald-100 text-emerald-800">
-                <UserRound size={30} />
-              </div>
-              <div>
-                <p className="text-sm font-bold uppercase tracking-wider text-emerald-700">My profile</p>
-                <h1 className="text-2xl font-black">{session.user.name}</h1>
-              </div>
-            </div>
-
-            <dl className="mt-8 grid gap-5 sm:grid-cols-2">
-              <ProfileDetail label="Email" value={session.user.email} />
-              <ProfileDetail label="Account type" value={roleLabels[role]} />
-              <ProfileDetail label="Phone" value="+91 98765 43210" />
-              <ProfileDetail label="Service address" value="Bandra West, Mumbai" />
-            </dl>
-
-            <div className="mt-8 grid gap-6 lg:grid-cols-2">
-              <div className="rounded-2xl bg-emerald-50 p-5">
-                <h2 className="font-black">Pest control service details</h2>
-                <ul className="mt-4 space-y-3 text-sm text-slate-700">
-                  <li><span className="font-bold text-slate-900">Issue:</span> Cockroach infestation in kitchen and storage area</li>
-                  <li><span className="font-bold text-slate-900">Property type:</span> 2 BHK apartment</li>
-                  <li><span className="font-bold text-slate-900">Preferred date:</span> Saturday, 10:30 AM</li>
-                  <li><span className="font-bold text-slate-900">Treatment plan:</span> Deep spray + preventive sealing</li>
-                </ul>
-              </div>
-
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                <h2 className="font-black">Service journey</h2>
-                <div className="mt-4 space-y-4 text-sm text-slate-700">
-                  <div className="rounded-xl bg-white p-3 ring-1 ring-slate-200">
-                    <p className="font-bold text-slate-900">Lead generated</p>
-                    <p className="mt-1">Customer inquiry received and assigned to a manager.</p>
-                  </div>
-                  <div className="rounded-xl bg-white p-3 ring-1 ring-slate-200">
-                    <p className="font-bold text-slate-900">Inspection scheduled</p>
-                    <p className="mt-1">Site review by technician before final treatment plan.</p>
-                  </div>
-                  <div className="rounded-xl bg-white p-3 ring-1 ring-slate-200">
-                    <p className="font-bold text-slate-900">Follow-up care</p>
-                    <p className="mt-1">Post-treatment support and quarterly prevention check.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-        </main>
-      </div>
-    );
+    return <main className="grid min-h-screen place-items-center">Returning to the customer website...</main>;
   }
 
   const visibleNav = role === "admin" ? adminNav : role === "manager" ? managerNav : technicianNav;
   return (
     <div className="min-h-screen bg-[#f5f8f7] text-[#102a33]">
       <aside className="fixed hidden h-screen w-64 border-r bg-[#072f29] p-5 text-white md:block">
-        <Link href="/crm" className="text-2xl font-black">Pestora<span className="text-emerald-300">.</span></Link>
+        <Link href="/crm" className="text-2xl font-black">Pestquro<span className="text-emerald-300">.</span></Link>
         <p className="mt-1 text-xs text-white/50">Business CRM · {roleLabels[role]}</p>
         <nav className="mt-10 space-y-2">
           {visibleNav.map(([name, Icon]) => (
@@ -220,8 +165,4 @@ export default function CRM() {
       </main>
     </div>
   );
-}
-
-function ProfileDetail({ label, value }: { label: string; value: string }) {
-  return <div><dt className="text-xs font-bold uppercase tracking-wider text-slate-400">{label}</dt><dd className="mt-1 font-semibold">{value}</dd></div>;
 }

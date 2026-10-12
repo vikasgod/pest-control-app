@@ -4,9 +4,9 @@ import Footer from "../../components/footer";
 import Header from "../../components/header";
 
 export const metadata: Metadata = {
-  title: "Pestora Journal | Pest prevention guides",
+  title: "Pestquro Journal | Pest prevention guides",
   description:
-    "Practical pest prevention and home care guides from the Pestora team.",
+    "Practical pest prevention and home care guides from the Pestquro team.",
 };
 
 export default function BlogPage() {

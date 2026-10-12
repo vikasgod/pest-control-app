@@ -41,7 +41,7 @@ export default function QuoteRequestPage() {
   return (
     <main className="min-h-screen bg-[#f5f8f7] px-4 py-10 text-[#102a33] sm:px-6">
       <section className="mx-auto max-w-2xl rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-9">
-        <Link href="/" className="text-sm font-bold text-emerald-700">← Back to Pestora</Link>
+        <Link href="/" className="text-sm font-bold text-emerald-700">← Back to Pestquro</Link>
         <p className="mt-7 text-sm font-bold uppercase tracking-widest text-emerald-700">Personalized estimate</p>
         <h1 className="mt-2 text-3xl font-black">Request a quotation</h1>
         <p className="mt-2 text-slate-600">Tell us what you need. Our team will review your request and email you a quotation.</p>

@@ -26,7 +26,7 @@ export default function BlogListing() {
     <main>
       <section className="bg-[radial-gradient(circle_at_75%_25%,#d8f7e8,transparent_35%),linear-gradient(120deg,#effaf5,#fff)]">
         <div className="mx-auto max-w-[1180px] px-6 py-20 md:py-28">
-          <p className="font-black uppercase tracking-widest text-emerald-700">Pestora Journal</p>
+          <p className="font-black uppercase tracking-widest text-emerald-700">Pestquro Journal</p>
           <h1 className="mt-3 max-w-3xl text-4xl font-black tracking-tight md:text-6xl">Helpful guides for a healthier home.</h1>
           <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">Straightforward advice to help you prevent pests and care for your home.</p>
         </div>

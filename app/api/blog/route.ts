@@ -100,7 +100,7 @@ export async function POST(request: Request) {
     }
 
     const timestamp = Math.floor(Date.now() / 1000);
-    const folder = "pestora/blog";
+    const folder = "Pestquro/blog";
     const signaturePayload = `folder=${folder}&overwrite=false&public_id=${slug}&timestamp=${timestamp}${apiSecret}`;
     const signature = createHash("sha1").update(signaturePayload).digest("hex");
     const cloudinaryForm = new FormData();

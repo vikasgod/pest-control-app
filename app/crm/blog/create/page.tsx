@@ -99,9 +99,9 @@ export default function CreateBlogPage() {
       <div className="mx-auto max-w-3xl">
         <Link href="/crm" className="inline-flex items-center gap-2 font-bold text-emerald-800"><ArrowLeft size={17} /> Back to CRM</Link>
         <header className="mt-7">
-          <p className="font-black uppercase tracking-widest text-emerald-700">Pestora Journal</p>
+          <p className="font-black uppercase tracking-widest text-emerald-700">Pestquro Journal</p>
           <h1 className="mt-2 text-4xl font-black">Create a blog post</h1>
-          <p className="mt-2 text-slate-600">Add an article to the public Pestora blog. The cover image uploads to Cloudinary.</p>
+          <p className="mt-2 text-slate-600">Add an article to the public Pestquro blog. The cover image uploads to Cloudinary.</p>
         </header>
         <form onSubmit={submitPost} className="mt-8 space-y-6 rounded-3xl border bg-white p-6 shadow-sm md:p-8">
           <Field label="Post title" name="title" placeholder="e.g. How to prevent termites" required />

@@ -22,11 +22,11 @@ export async function generateMetadata({
   const post = getBlogPost(slug);
 
   if (!post) {
-    return { title: "Pestora Journal | Pest prevention guides" };
+    return { title: "Pestquro Journal | Pest prevention guides" };
   }
 
   return {
-    title: `${post.title} | Pestora Journal`,
+    title: `${post.title} | Pestquro Journal`,
     description: post.excerpt,
   };
 }
@@ -104,7 +104,7 @@ export default async function BlogArticlePage({
                 Need help with a pest problem?
               </h2>
               <p className="mt-2 leading-7 text-slate-600">
-                Pestora can help you find the right treatment for your home.
+                Pestquro can help you find the right treatment for your home.
               </p>
               <Link
                 href="/#booking"
