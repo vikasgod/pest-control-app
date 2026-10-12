@@ -5,9 +5,11 @@ import {
   CircleDot,
   CircleHelp,
   MapPin,
+  Pencil,
   Plus,
   ShieldCheck,
   Tags,
+  Trash2,
   UserRound,
   UserRoundPlus,
   UsersRound,
@@ -560,11 +562,11 @@ export default function StaffManagement({ role, managerName }: StaffManagementPr
                   </td>
                   <td className="sticky left-0 z-10 bg-white px-5 py-4 shadow-[4px_0_8px_-6px_rgba(15,23,42,0.4)]">
                     <div className="flex items-center gap-2">
-                      <button type="button" onClick={() => setConfirmation({ action: "edit", member })} disabled={isSaving || deletingId !== null} aria-label={`Edit ${member.name}`} className="rounded-lg bg-emerald-700 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-800 disabled:opacity-50">
-                        Edit
+                      <button type="button" onClick={() => setConfirmation({ action: "edit", member })} disabled={isSaving || deletingId !== null} aria-label={`Edit ${member.name}`} className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-700 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-800 disabled:opacity-50">
+                        <Pencil size={14} aria-hidden="true" />
                       </button>
-                      <button type="button" onClick={() => setConfirmation({ action: "delete", member })} disabled={isSaving || deletingId === member.id} aria-label={`Delete ${member.name}`} className="rounded-lg bg-red-600 px-3 py-2 text-xs font-bold text-white hover:bg-red-700 disabled:opacity-50">
-                        {deletingId === member.id ? "Deleting..." : "Delete"}
+                      <button type="button" onClick={() => setConfirmation({ action: "delete", member })} disabled={isSaving || deletingId === member.id} aria-label={`Delete ${member.name}`} className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-2 text-xs font-bold text-white hover:bg-red-700 disabled:opacity-50">
+                        <Trash2 size={14} aria-hidden="true" />
                       </button>
                     </div>
                   </td>
