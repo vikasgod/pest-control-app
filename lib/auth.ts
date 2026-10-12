@@ -39,6 +39,12 @@ export const auth = betterAuth({
         defaultValue: "customer",
         input: false,
       },
+      status: {
+        type: "string",
+        required: false,
+        defaultValue: "Created",
+        input: false,
+      },
     },
   },
   databaseHooks: {
@@ -71,7 +77,7 @@ export const auth = betterAuth({
               : technicianEmails.has(email)
                 ? "technician"
                 : "customer";
-          return { data: { ...user, role } };
+          return { data: { ...user, role, status: user.status ?? "Created" } };
         },
       },
     },

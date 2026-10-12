@@ -52,12 +52,18 @@ export default function AuthForm({
         if (result.error) throw new Error(result.error.message ?? "Unable to register.");
         await redirectAfterSignIn();
       } else if (mode === "login") {
-        const username = String(form.get("username") ?? "").trim();
-        const result = await authClient.signIn.username({
-          username,
-          password,
-          callbackURL: "/auth/redirect",
-        });
+        const usernameOrEmail = String(form.get("username") ?? "").trim();
+        const result = usernameOrEmail.includes("@")
+          ? await authClient.signIn.email({
+              email: usernameOrEmail,
+              password,
+              callbackURL: "/auth/redirect",
+            })
+          : await authClient.signIn.username({
+              username: usernameOrEmail,
+              password,
+              callbackURL: "/auth/redirect",
+            });
         if (result.error) throw new Error(result.error.message ?? "Email or password is incorrect.");
         await redirectAfterSignIn();
       } else if (mode === "forgot-password") {
@@ -137,11 +143,11 @@ export default function AuthForm({
           {mode === "register" && <Field label="Full name" name="name" autoComplete="name" required />}
           {(mode === "login" || mode === "register") && (
             <Field
-              label="Username"
+              label={mode === "login" ? "Username or email" : "Username"}
               name="username"
               autoComplete="username"
               minLength={3}
-              maxLength={30}
+              maxLength={mode === "login" ? 254 : 30}
               required
             />
           )}

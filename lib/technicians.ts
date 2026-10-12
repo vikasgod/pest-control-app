@@ -2,6 +2,7 @@ export type StaffRole = "Manager" | "Technician";
 
 export type StaffMember = {
   id?: string;
+  email?: string;
   name: string;
   role: StaffRole;
   team: string;

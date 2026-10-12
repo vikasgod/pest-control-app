@@ -24,6 +24,8 @@ import type { CrmRole } from "./roles";
 
 type StaffForm = {
   name: string;
+  email: string;
+  password: string;
   role: StaffRole;
   team: string;
   location: string;
@@ -40,6 +42,8 @@ type StaffConfirmation = {
 
 const emptyForm: StaffForm = {
   name: "",
+  email: "",
+  password: "",
   role: "Technician",
   team: "",
   location: "",
@@ -102,6 +106,11 @@ export default function StaffManagement({ role, managerName }: StaffManagementPr
     event.preventDefault();
     if (
       !form.name.trim() ||
+      (!editingId &&
+        (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()) ||
+          form.email.trim().length > 254 ||
+          form.password.length < 8 ||
+          form.password.length > 128)) ||
       !form.team.trim() ||
       !form.location.trim() ||
       (form.role === "Technician" &&
@@ -118,6 +127,9 @@ export default function StaffManagement({ role, managerName }: StaffManagementPr
           ...(editingId ? { id: editingId } : {}),
           name: form.name.trim(),
           role: form.role,
+          ...(!editingId
+            ? { email: form.email.trim().toLowerCase(), password: form.password }
+            : {}),
           team: form.team.trim(),
           location: form.location.trim(),
           ...(form.role === "Technician"
@@ -160,6 +172,8 @@ export default function StaffManagement({ role, managerName }: StaffManagementPr
     setIsFormOpen(true);
     setForm({
       name: member.name,
+      email: member.email ?? "",
+      password: "",
       role: member.role,
       team: member.team,
       location: member.location,
@@ -305,6 +319,41 @@ export default function StaffManagement({ role, managerName }: StaffManagementPr
                       />
                     </span>
                   </label>
+                  {!editingId && (
+                    <>
+                      <label className="block text-sm font-semibold text-slate-700">
+                        Email address <span className="text-red-500">*</span>
+                        <span className="mt-2 flex items-center gap-3 rounded-xl border border-slate-200 px-3.5 focus-within:border-emerald-600">
+                          <input
+                            type="email"
+                            value={form.email}
+                            onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
+                            placeholder="staff@example.com"
+                            autoComplete="email"
+                            maxLength={254}
+                            required
+                            className="w-full bg-transparent py-3 text-sm font-normal outline-none placeholder:text-slate-400"
+                          />
+                        </span>
+                      </label>
+                      <label className="block text-sm font-semibold text-slate-700">
+                        Password <span className="text-red-500">*</span>
+                        <span className="mt-2 flex items-center gap-3 rounded-xl border border-slate-200 px-3.5 focus-within:border-emerald-600">
+                          <input
+                            type="password"
+                            value={form.password}
+                            onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
+                            placeholder="At least 8 characters"
+                            autoComplete="new-password"
+                            minLength={8}
+                            maxLength={128}
+                            required
+                            className="w-full bg-transparent py-3 text-sm font-normal outline-none placeholder:text-slate-400"
+                          />
+                        </span>
+                      </label>
+                    </>
+                  )}
                   {!isManager && (
                     <label className="block text-sm font-semibold text-slate-700">
                       Role <span className="text-red-500">*</span>
@@ -480,17 +529,16 @@ export default function StaffManagement({ role, managerName }: StaffManagementPr
           <h3 className="text-lg font-black">Team roster</h3>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[920px] text-left text-sm">
+          <table className="w-full min-w-[1080px] text-left text-sm">
             <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
               <tr>
                 <th className="px-2 py-2">Sr. No.</th>
                 <th className="px-4 py-2">Staff</th>
+                <th className="px-5 py-3">Email</th>
                 <th className="px-5 py-3">Role</th>
                 <th className="px-5 py-3">Manager</th>
-                <th className="px-5 py-3">Team</th>
                 <th className="px-5 py-3">Location</th>
                 <th className="px-5 py-3">Pincode</th>
-                <th className="px-5 py-3">Assigned</th>
                 <th className="px-5 py-3">Status</th>
                 <th className="sticky left-0 z-20 bg-slate-50 px-5 py-3 shadow-[4px_0_8px_-6px_rgba(15,23,42,0.4)]">Actions</th>
               </tr>
@@ -500,12 +548,11 @@ export default function StaffManagement({ role, managerName }: StaffManagementPr
                 <tr key={member.id ?? member.name} className="border-t border-slate-100">
                   <td className="px-5 py-4">{i + 1}</td>
                   <td className="px-4 py-2 font-bold text-[#102a33]">{member.name}</td>
+                  <td className="px-5 py-4">{member.email ?? "—"}</td>
                   <td className="px-5 py-4">{member.role}</td>
                   <td className="px-5 py-4">{member.manager ?? "—"}</td>
-                  <td className="px-5 py-4">{member.team}</td>
                   <td className="px-5 py-4">{member.location}</td>
                   <td className="px-5 py-4">{member.pincode ?? "—"}</td>
-                  <td className="px-5 py-4">{member.assigned} jobs</td>
                   <td className="px-5 py-4">
                     <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${member.status === "Active" ? "bg-emerald-100 text-emerald-700" : member.status === "On site" ? "bg-blue-100 text-blue-700" : member.status === "On route" ? "bg-amber-100 text-amber-700" : "bg-slate-200 text-slate-700"}`}>
                       {member.status}
