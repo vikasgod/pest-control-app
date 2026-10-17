@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import Footer from "../../../components/footer";
-import Header from "../../../components/header";
 import CustomBlogArticle from "../../../components/customBlogArticle";
 import { blogPosts, getBlogPost } from "../posts";
 
@@ -43,7 +41,6 @@ export default async function BlogArticlePage({
 
   return (
     <>
-      <Header />
       <main>
         <article>
           <header className="bg-[radial-gradient(circle_at_75%_25%,#d8f7e8,transparent_35%),linear-gradient(120deg,#effaf5,#fff)]">
@@ -122,7 +119,6 @@ export default async function BlogArticlePage({
           </div>
         </article>
       </main>
-      <Footer />
     </>
   );
 }

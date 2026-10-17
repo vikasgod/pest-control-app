@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import { Phone } from "lucide-react";
 
 function Footer() {
   return (
@@ -10,6 +11,10 @@ function Footer() {
           <p className="mt-3 text-sm leading-6 text-white/60">
             Professional pest control with a better customer experience.
           </p>
+          <div className="flex items-center gap-1 text-sm font-bold">
+            <Phone size={15} /> +91 98765 43210
+          </div>
+          <small className="text-slate-500">24/7 Support</small>
         </div>
         <div>
           <b>Company</b>

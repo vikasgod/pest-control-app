@@ -12,9 +12,7 @@ export const metadata: Metadata = {
 export default function BlogPage() {
   return (
     <>
-      <Header />
       <BlogListing />
-      <Footer />
     </>
   );
 }

@@ -20,14 +20,45 @@ const services = [
     "🪳",
     "Cockroach Control",
     "Fast treatment for kitchens, homes and offices.",
+    "/services/cockroach-control",
   ],
-  ["🐜", "Termite Control", "Protect furniture and property from damage."],
-  ["🦟", "Mosquito Control", "Reduce mosquitoes around your home and office."],
-  ["🛏️", "Bed Bug Control", "Deep treatment for beds, sofas and rooms."],
-  ["🐀", "Rodent Control", "Safe solutions for rats and mice."],
-  ["🪰", "Fly Control", "Keep food areas clean and hygienic."],
-  ["🕷️", "Spider Control", "Target webs and recurring infestations."],
-  ["🐜", "Ant Control", "Long-lasting treatment for ant colonies."],
+  [
+    "🐜",
+    "Termite Control",
+    "Protect furniture and property from damage.",
+    "/services/termite-control",
+  ],
+  [
+    "🦟",
+    "Mosquito Control",
+    "Reduce mosquitoes around your home and office.",
+    "/services/mosquito-control",
+  ],
+  [
+    "🛏️",
+    "Bed Bug Control",
+    "Deep treatment for beds, sofas and rooms.",
+    "/services/bed-bug-control",
+  ],
+  [
+    "🐀",
+    "Rodent Control",
+    "Safe solutions for rats and mice.",
+    "/services/rodent-control",
+  ],
+  ["🪰", "Fly Control", "Keep food areas clean and hygienic.", "/services/fly-control"],
+  [
+    "🕷️",
+    "Spider Control",
+    "Target webs and recurring infestations.",
+    "/services/spider-control",
+  ],
+  [
+    "🐜",
+    "Ant Control",
+    "Long-lasting treatment for ant colonies.",
+    "/services/nest-control",
+  ],
 ];
 function HomeContent() {
   return (
@@ -91,7 +122,7 @@ function HomeContent() {
           </span>
         </div>
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {services.map(([icon, title, desc]) => (
+          {services.map(([icon, title, desc,link]) => (
             <div
               key={title}
               className="group rounded-2xl border border-slate-200 bg-white p-6 transition hover:-translate-y-1 hover:border-emerald-200 hover:shadow-xl"
@@ -102,10 +133,10 @@ function HomeContent() {
               <h3 className="mt-5 text-lg font-black">{title}</h3>
               <p className="mt-2 text-sm leading-6 text-slate-500">{desc}</p>
               <a
-                href="#booking"
+                href={link}
                 className="mt-5 inline-flex items-center gap-1 text-sm font-bold text-emerald-700"
               >
-                Book service <ArrowRight size={15} />
+                know more <ArrowRight size={15} />
               </a>
             </div>
           ))}
