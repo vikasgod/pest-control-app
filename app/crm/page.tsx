@@ -128,9 +128,7 @@ export default function CRM() {
             <p className="text-xs text-slate-500">Manage your pest-control business</p>
           </div>
           <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-start">
-            <div className="hidden items-center gap-2 rounded-xl border bg-white px-3 py-2 md:flex">
-              <Search size={16} /><input className="w-40 outline-none" placeholder="Search..." />
-            </div>
+
             {role === "admin" && (
               <Link href="/crm/blog/create" className="rounded-xl bg-emerald-700 px-3 py-2 text-sm font-bold text-white">
                 Create blog

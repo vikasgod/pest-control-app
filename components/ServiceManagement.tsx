@@ -13,6 +13,7 @@ import {
   type PropertyType,
   type ServiceAreaType,
 } from "../lib/service-types";
+import ServiceSearch from "./serviceSearch";
 
 type ServiceItem = {
   id: string;
@@ -37,7 +38,9 @@ type CreatedServiceResponse = {
   service: ServiceItem;
 };
 
-function isServiceCategoryResponse(value: unknown): value is { category: ServiceCategory } {
+function isServiceCategoryResponse(
+  value: unknown,
+): value is { category: ServiceCategory } {
   return (
     typeof value === "object" &&
     value !== null &&
@@ -46,7 +49,9 @@ function isServiceCategoryResponse(value: unknown): value is { category: Service
   );
 }
 
-function isCreatedServiceResponse(value: unknown): value is CreatedServiceResponse {
+function isCreatedServiceResponse(
+  value: unknown,
+): value is CreatedServiceResponse {
   return (
     typeof value === "object" &&
     value !== null &&
@@ -114,7 +119,9 @@ export default function ServiceManagement({ role }: { role: CrmRole }) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [hasDiscount, setHasDiscount] = useState(false);
   const [propertyType, setPropertyType] = useState<PropertyType>("1 BHK");
-  const [selectedAreaTypes, setSelectedAreaTypes] = useState<ServiceAreaType[]>(["Full property"]);
+  const [selectedAreaTypes, setSelectedAreaTypes] = useState<ServiceAreaType[]>(
+    ["Full property"],
+  );
   const [categoryChoice, setCategoryChoice] = useState("new");
   const [editingService, setEditingService] = useState<{
     categoryId: string;
@@ -123,6 +130,9 @@ export default function ServiceManagement({ role }: { role: CrmRole }) {
   } | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [searchResults, setSearchResults] = useState<ServiceCategory[] | null>(
+    null,
+  );
 
   const loadCategories = useCallback(async () => {
     setIsLoading(true);
@@ -130,7 +140,10 @@ export default function ServiceManagement({ role }: { role: CrmRole }) {
     try {
       const response = await fetch("/api/services");
       const result: unknown = await response.json();
-      if (!response.ok) throw new Error(getApiError(result, "Unable to load service categories."));
+      if (!response.ok)
+        throw new Error(
+          getApiError(result, "Unable to load service categories."),
+        );
       if (
         typeof result !== "object" ||
         result === null ||
@@ -142,7 +155,11 @@ export default function ServiceManagement({ role }: { role: CrmRole }) {
       }
       setCategories(result.categories);
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : "Unable to load service categories.");
+      setError(
+        loadError instanceof Error
+          ? loadError.message
+          : "Unable to load service categories.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -167,7 +184,10 @@ export default function ServiceManagement({ role }: { role: CrmRole }) {
 
     const payload = {
       ...(editingService
-        ? { categoryId: editingService.categoryId, serviceId: editingService.service.id }
+        ? {
+            categoryId: editingService.categoryId,
+            serviceId: editingService.service.id,
+          }
         : categoryChoice === "new"
           ? { categoryName: String(formData.get("categoryName") ?? "").trim() }
           : { categoryId: categoryChoice }),
@@ -187,7 +207,15 @@ export default function ServiceManagement({ role }: { role: CrmRole }) {
         body: JSON.stringify(payload),
       });
       const result: unknown = await response.json();
-      if (!response.ok) throw new Error(getApiError(result, editingService ? "Unable to update service." : "Unable to save category and service."));
+      if (!response.ok)
+        throw new Error(
+          getApiError(
+            result,
+            editingService
+              ? "Unable to update service."
+              : "Unable to save category and service.",
+          ),
+        );
       let savedCategory: ServiceCategory;
       let savedServiceName: string;
       if (editingService) {
@@ -196,32 +224,45 @@ export default function ServiceManagement({ role }: { role: CrmRole }) {
         }
         savedCategory = result.category;
         savedServiceName =
-          savedCategory.services.find((service) => service.id === editingService.service.id)?.name ??
-          editingService.service.name;
+          savedCategory.services.find(
+            (service) => service.id === editingService.service.id,
+          )?.name ?? editingService.service.name;
       } else {
         if (!isCreatedServiceResponse(result)) {
-          throw new Error("The saved category and service response was invalid.");
+          throw new Error(
+            "The saved category and service response was invalid.",
+          );
         }
         savedCategory = result.category;
         savedServiceName = result.service.name;
       }
 
       setCategories((current) => {
-        const exists = current.some((category) => category.id === savedCategory.id);
+        const exists = current.some(
+          (category) => category.id === savedCategory.id,
+        );
         return exists
-          ? current.map((category) => category.id === savedCategory.id ? savedCategory : category)
+          ? current.map((category) =>
+              category.id === savedCategory.id ? savedCategory : category,
+            )
           : [savedCategory, ...current];
       });
       setCategoryChoice(savedCategory.id);
       setHasDiscount(false);
       setEditingService(null);
       setIsFormOpen(false);
-      setNotice(editingService
-        ? `"${savedServiceName}" updated.`
-        : `"${savedServiceName}" saved under ${savedCategory.name}.`);
+      setNotice(
+        editingService
+          ? `"${savedServiceName}" updated.`
+          : `"${savedServiceName}" saved under ${savedCategory.name}.`,
+      );
       form.reset();
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : "Unable to save category and service.");
+      setError(
+        saveError instanceof Error
+          ? saveError.message
+          : "Unable to save category and service.",
+      );
     } finally {
       setIsSaving(false);
     }
@@ -241,7 +282,11 @@ export default function ServiceManagement({ role }: { role: CrmRole }) {
   function openEditForm(category: ServiceCategory, service: ServiceItem) {
     setError("");
     setNotice("");
-    setEditingService({ categoryId: category.id, categoryName: category.name, service });
+    setEditingService({
+      categoryId: category.id,
+      categoryName: category.name,
+      service,
+    });
     setCategoryChoice(category.id);
     setHasDiscount(service.discountPrice !== undefined);
     setPropertyType(service.propertyType);
@@ -264,8 +309,13 @@ export default function ServiceManagement({ role }: { role: CrmRole }) {
     );
   }
 
-  async function deleteService(category: ServiceCategory, service: ServiceItem) {
-    const confirmed = window.confirm(`Delete "${service.name}" from ${category.name}?`);
+  async function deleteService(
+    category: ServiceCategory,
+    service: ServiceItem,
+  ) {
+    const confirmed = window.confirm(
+      `Delete "${service.name}" from ${category.name}?`,
+    );
     if (!confirmed) return;
 
     setError("");
@@ -274,22 +324,32 @@ export default function ServiceManagement({ role }: { role: CrmRole }) {
       const response = await fetch("/api/services", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ categoryId: category.id, serviceId: service.id }),
+        body: JSON.stringify({
+          categoryId: category.id,
+          serviceId: service.id,
+        }),
       });
       const result: unknown = await response.json();
-      if (!response.ok) throw new Error(getApiError(result, "Unable to delete service."));
+      if (!response.ok)
+        throw new Error(getApiError(result, "Unable to delete service."));
       if (!isServiceCategoryResponse(result)) {
         throw new Error("The deleted service response was invalid.");
       }
 
       setCategories((current) =>
         current.map((currentCategory) =>
-          currentCategory.id === result.category.id ? result.category : currentCategory,
+          currentCategory.id === result.category.id
+            ? result.category
+            : currentCategory,
         ),
       );
       setNotice(`"${service.name}" deleted.`);
     } catch (deleteError) {
-      setError(deleteError instanceof Error ? deleteError.message : "Unable to delete service.");
+      setError(
+        deleteError instanceof Error
+          ? deleteError.message
+          : "Unable to delete service.",
+      );
     }
   }
 
@@ -305,10 +365,15 @@ export default function ServiceManagement({ role }: { role: CrmRole }) {
     <section className="space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <p className="text-sm font-semibold text-emerald-700">Service catalog</p>
-          <h2 className="mt-1 text-2xl font-black tracking-tight sm:text-3xl">Services</h2>
+          <p className="text-sm font-semibold text-emerald-700">
+            Service catalog
+          </p>
+          <h2 className="mt-1 text-2xl font-black tracking-tight sm:text-3xl">
+            Services
+          </h2>
           <p className="mt-1 text-sm text-slate-500">
-            Add a category and its service together, or choose an existing category.
+            Add a category and its service together, or choose an existing
+            category.
           </p>
         </div>
         <button
@@ -320,16 +385,38 @@ export default function ServiceManagement({ role }: { role: CrmRole }) {
         </button>
       </div>
 
-      {error && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700">{error}</p>}
-      {notice && <p role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-medium text-emerald-700">{notice}</p>}
+      {error && (
+        <p
+          role="alert"
+          className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700"
+        >
+          {error}
+        </p>
+      )}
+      {notice && (
+        <p
+          role="status"
+          className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-medium text-emerald-700"
+        >
+          {notice}
+        </p>
+      )}
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
           <div>
             <h3 className="text-lg font-black">Categories and services</h3>
             <p className="text-sm text-slate-500">
-              {categories.length} categories · {categories.reduce((sum, category) => sum + category.services.length, 0)} services
+              {categories.length} categories ·{" "}
+              {categories.reduce(
+                (sum, category) => sum + category.services.length,
+                0,
+              )}{" "}
+              services
             </p>
+          </div>
+          <div className="inline-flex items-center gap-2 px-3 py-2 text-sm font-bold text-slate-600 disabled:opacity-50">
+            <ServiceSearch onResults={setSearchResults} />
           </div>
           <button
             type="button"
@@ -337,39 +424,62 @@ export default function ServiceManagement({ role }: { role: CrmRole }) {
             disabled={isLoading}
             className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold text-slate-600 disabled:opacity-50"
           >
-            <RefreshCw size={15} className={isLoading ? "animate-spin" : ""} /> Refresh
+            <RefreshCw size={15} className={isLoading ? "animate-spin" : ""} />{" "}
+            Refresh
           </button>
         </div>
         {isLoading ? (
-          <p className="p-8 text-center text-sm text-slate-500">Loading categories...</p>
-        ) : categories.length === 0 ? (
           <p className="p-8 text-center text-sm text-slate-500">
-            No categories yet. Click Add to create a category and its first service.
+            Loading categories...
+          </p>
+        ) : (searchResults ?? categories).length === 0 ? (
+          <p className="p-8 text-center text-sm text-slate-500">
+            No matching categories or services found.
           </p>
         ) : (
           <div className="space-y-4 p-5">
-            {categories.map((category) => (
-              <article key={category.id} className="overflow-hidden rounded-2xl border border-slate-200">
+            {(searchResults ?? categories).map((category) => (
+              <article
+                key={category.id}
+                className="overflow-hidden rounded-2xl border border-slate-200"
+              >
                 <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-50 px-5 py-4">
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">{category.id}</p>
-                    <h4 className="mt-1 text-lg font-black text-[#102a33]">{category.name}</h4>
+                    <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">
+                      {category.id}
+                    </p>
+                    <h4 className="mt-1 text-lg font-black text-[#102a33]">
+                      {category.name}
+                    </h4>
                   </div>
                   <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-600 ring-1 ring-slate-200">
                     {category.services.length} services
                   </span>
                 </div>
                 {category.services.length === 0 ? (
-                  <p className="px-5 py-4 text-sm text-slate-500">No services in this category yet.</p>
+                  <p className="px-5 py-4 text-sm text-slate-500">
+                    No services in this category yet.
+                  </p>
                 ) : (
                   <div className="divide-y divide-slate-100">
                     {category.services.map((service) => (
-                      <div key={service.id} className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div
+                        key={service.id}
+                        className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+                      >
                         <div>
-                          <p className="font-bold text-[#102a33]">{service.name}</p>
-                          <p className="mt-1 text-sm text-slate-500">{service.serviceType} · {service.propertyType}</p>
-                          <p className="mt-1 text-xs text-slate-500">{service.areaTypes.join(", ")}</p>
-                          <p className="mt-1 text-xs text-slate-400">{service.id} · {service.durationMinutes} minutes</p>
+                          <p className="font-bold text-[#102a33]">
+                            {service.name}
+                          </p>
+                          <p className="mt-1 text-sm text-slate-500">
+                            {service.serviceType} · {service.propertyType}
+                          </p>
+                          <p className="mt-1 text-xs text-slate-500">
+                            {service.areaTypes.join(", ")}
+                          </p>
+                          <p className="mt-1 text-xs text-slate-400">
+                            Duration : {service.durationMinutes} minutes
+                          </p>
                         </div>
                         <div className="flex items-center gap-3">
                           <button
@@ -382,23 +492,36 @@ export default function ServiceManagement({ role }: { role: CrmRole }) {
                           </button>
                           <button
                             type="button"
-                            onClick={() => void deleteService(category, service)}
+                            onClick={() =>
+                              void deleteService(category, service)
+                            }
                             className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 px-2.5 py-1.5 text-xs font-bold text-red-700 hover:bg-red-50"
                             aria-label={`Delete ${service.name}`}
                           >
                             <Trash2 size={13} /> Delete
                           </button>
-                          <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${service.isActive ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>
+                          <span
+                            className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${service.isActive ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"}`}
+                          >
                             {service.isActive ? "Active" : "Inactive"}
                           </span>
                           <div className="flex flex-col items-end">
                             {service.discountPrice !== undefined ? (
                               <>
-                                <span className="text-xs text-slate-400 line-through">₹{service.price.toLocaleString("en-IN")}</span>
-                                <strong className="text-lg text-emerald-700">₹{service.discountPrice.toLocaleString("en-IN")}</strong>
+                                <span className="text-xs text-slate-400 line-through">
+                                  ₹{service.price.toLocaleString("en-IN")}
+                                </span>
+                                <strong className="text-lg text-emerald-700">
+                                  ₹
+                                  {service.discountPrice.toLocaleString(
+                                    "en-IN",
+                                  )}
+                                </strong>
                               </>
                             ) : (
-                              <strong className="text-lg text-[#102a33]">₹{service.price.toLocaleString("en-IN")}</strong>
+                              <strong className="text-lg text-[#102a33]">
+                                ₹{service.price.toLocaleString("en-IN")}
+                              </strong>
                             )}
                           </div>
                         </div>
@@ -428,14 +551,27 @@ export default function ServiceManagement({ role }: { role: CrmRole }) {
               <span className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-700">
                 <ShieldCheck size={16} /> Admin service setup
               </span>
-              <h3 id="service-form-title" className="mt-1 text-xl font-black">{editingService ? "Edit service" : "Add category and service"}</h3>
-              <p className="mt-1 text-sm text-slate-500">{editingService ? `Update ${editingService.service.name} in ${editingService.categoryName}.` : "Choose a category and service type; all details save together."}</p>
+              <h3 id="service-form-title" className="mt-1 text-xl font-black">
+                {editingService ? "Edit service" : "Add category and service"}
+              </h3>
+              <p className="mt-1 text-sm text-slate-500">
+                {editingService
+                  ? `Update ${editingService.service.name} in ${editingService.categoryName}.`
+                  : "Choose a category and service type; all details save together."}
+              </p>
             </div>
-            <form onSubmit={createCategoryService} className="grid gap-4 sm:grid-cols-2">
+            <form
+              onSubmit={createCategoryService}
+              className="grid gap-4 sm:grid-cols-2"
+            >
               {editingService ? (
                 <div className="sm:col-span-2">
-                  <span className="text-sm font-semibold text-slate-700">Category</span>
-                  <p className="mt-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-600">{editingService.categoryName}</p>
+                  <span className="text-sm font-semibold text-slate-700">
+                    Category
+                  </span>
+                  <p className="mt-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-600">
+                    {editingService.categoryName}
+                  </p>
                 </div>
               ) : (
                 <>
@@ -444,31 +580,59 @@ export default function ServiceManagement({ role }: { role: CrmRole }) {
                     <select
                       name="categoryChoice"
                       value={categoryChoice}
-                      onChange={(event) => setCategoryChoice(event.target.value)}
+                      onChange={(event) =>
+                        setCategoryChoice(event.target.value)
+                      }
                       className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 font-normal outline-none focus:border-emerald-600"
                     >
                       <option value="new">Create a new category</option>
                       {categories.map((category) => (
-                        <option key={category.id} value={category.id}>{category.name}</option>
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
                       ))}
                     </select>
                   </label>
                   {categoryChoice === "new" && (
                     <label className="block text-sm font-semibold text-slate-700 sm:col-span-2">
                       New category name
-                      <input name="categoryName" required maxLength={100} placeholder="e.g. Cockroach Control" className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 font-normal outline-none placeholder:text-slate-400 focus:border-emerald-600" />
+                      <input
+                        name="categoryName"
+                        required
+                        maxLength={100}
+                        placeholder="e.g. Cockroach Control"
+                        className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 font-normal outline-none placeholder:text-slate-400 focus:border-emerald-600"
+                      />
                     </label>
                   )}
                 </>
               )}
               <label className="block text-sm font-semibold text-slate-700 sm:col-span-2">
                 Service name
-                <input name="serviceName" required maxLength={100} defaultValue={editingService?.service.name} placeholder="e.g. Cockroach Gel Treatment" className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 font-normal outline-none placeholder:text-slate-400 focus:border-emerald-600" />
+                <input
+                  name="serviceName"
+                  required
+                  maxLength={100}
+                  defaultValue={editingService?.service.name}
+                  placeholder="e.g. Cockroach Gel Treatment"
+                  className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 font-normal outline-none placeholder:text-slate-400 focus:border-emerald-600"
+                />
               </label>
               <label className="block text-sm font-semibold text-slate-700">
                 Service type
-                <select name="serviceType" required defaultValue={editingService?.service.serviceType ?? serviceTypes[0]} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 font-normal outline-none focus:border-emerald-600">
-                  {serviceTypes.map((serviceType) => <option key={serviceType} value={serviceType}>{serviceType}</option>)}
+                <select
+                  name="serviceType"
+                  required
+                  defaultValue={
+                    editingService?.service.serviceType ?? serviceTypes[0]
+                  }
+                  className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 font-normal outline-none focus:border-emerald-600"
+                >
+                  {serviceTypes.map((serviceType) => (
+                    <option key={serviceType} value={serviceType}>
+                      {serviceType}
+                    </option>
+                  ))}
                 </select>
               </label>
               <label className="block text-sm font-semibold text-slate-700">
@@ -484,14 +648,23 @@ export default function ServiceManagement({ role }: { role: CrmRole }) {
                   }}
                   className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 font-normal outline-none focus:border-emerald-600"
                 >
-                  {propertyTypes.map((propertyType) => <option key={propertyType} value={propertyType}>{propertyType}</option>)}
+                  {propertyTypes.map((propertyType) => (
+                    <option key={propertyType} value={propertyType}>
+                      {propertyType}
+                    </option>
+                  ))}
                 </select>
               </label>
               <fieldset className="sm:col-span-2">
-                <legend className="text-sm font-semibold text-slate-700">Area type (select one or more)</legend>
+                <legend className="text-sm font-semibold text-slate-700">
+                  Area type (select one or more)
+                </legend>
                 <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
                   {serviceAreaTypesByProperty[propertyType].map((areaType) => (
-                    <label key={areaType} className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700">
+                    <label
+                      key={areaType}
+                      className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700"
+                    >
                       <input
                         type="checkbox"
                         name="areaTypes"
@@ -507,11 +680,30 @@ export default function ServiceManagement({ role }: { role: CrmRole }) {
               </fieldset>
               <label className="block text-sm font-semibold text-slate-700">
                 Duration (minutes)
-                <input name="durationMinutes" type="number" min="15" max="1440" step="15" required defaultValue={editingService?.service.durationMinutes ?? 60} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 font-normal outline-none focus:border-emerald-600" />
+                <input
+                  name="durationMinutes"
+                  type="number"
+                  min="15"
+                  max="1440"
+                  step="15"
+                  required
+                  defaultValue={editingService?.service.durationMinutes ?? 60}
+                  className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 font-normal outline-none focus:border-emerald-600"
+                />
               </label>
               <label className="block text-sm font-semibold text-slate-700">
                 Actual price (₹)
-                <input name="price" type="number" min="0.01" max="10000000" step="0.01" required defaultValue={editingService?.service.price} placeholder="e.g. 2500" className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 font-normal outline-none focus:border-emerald-600" />
+                <input
+                  name="price"
+                  type="number"
+                  min="0.01"
+                  max="10000000"
+                  step="0.01"
+                  required
+                  defaultValue={editingService?.service.price}
+                  placeholder="e.g. 2500"
+                  className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 font-normal outline-none focus:border-emerald-600"
+                />
               </label>
               <label className="flex cursor-pointer items-center gap-2 self-end pb-3 text-sm font-semibold text-slate-700">
                 <input
@@ -538,11 +730,36 @@ export default function ServiceManagement({ role }: { role: CrmRole }) {
                   />
                 </label>
               )}
-              {error && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 sm:col-span-2">{error}</p>}
+              {error && (
+                <p
+                  role="alert"
+                  className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 sm:col-span-2"
+                >
+                  {error}
+                </p>
+              )}
               <div className="flex flex-col-reverse gap-2 pt-2 sm:col-span-2 sm:flex-row sm:justify-end">
-                <button type="button" onClick={() => { setIsFormOpen(false); setEditingService(null); }} disabled={isSaving} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50">Cancel</button>
-                <button type="submit" disabled={isSaving} className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60">
-                  {isSaving ? "Saving..." : editingService ? "Save changes" : "Add"}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsFormOpen(false);
+                    setEditingService(null);
+                  }}
+                  disabled={isSaving}
+                  className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isSaving
+                    ? "Saving..."
+                    : editingService
+                      ? "Save changes"
+                      : "Add"}
                 </button>
               </div>
             </form>

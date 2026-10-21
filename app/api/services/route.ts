@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { headers } from "next/headers";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { auth } from "../../../lib/auth";
 import { connectToDatabase } from "../../../lib/mongodb";
 import {
@@ -22,16 +22,29 @@ async function isAdmin() {
   return session?.user.role === "admin";
 }
 
-export async function GET() {
+export async function GET(req:NextRequest) {
   try {
     if (!(await isAdmin())) {
       return errorResponse("Admin authorization required.", 403);
     }
 
     await connectToDatabase();
-    const categories = await ServiceCategoryModel.find({})
+    const { searchParams } = new URL(req.url);
+    const q = searchParams.get("q")?.trim() ?? "";
+    let categories;
+    if (!q) {
+      categories = await ServiceCategoryModel.find({})
       .sort({ createdAt: -1 })
       .lean();
+    }
+    console.log("Search query:", !q);
+    categories = await ServiceCategoryModel.find({
+     $or: [
+          { name: { $regex: q, $options: "i" } },
+          { "services.name": { $regex: q, $options: "i" } },
+        ],
+    })
+
     return NextResponse.json({
       categories: categories.map((category) => ({
         id: category.id,

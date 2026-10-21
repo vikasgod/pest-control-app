@@ -57,7 +57,7 @@ const services = [
     "🐜",
     "Ant Control",
     "Long-lasting treatment for ant colonies.",
-    "/services/nest-control",
+    "/services/ant-control",
   ],
 ];
 function HomeContent() {
