@@ -7,17 +7,17 @@ import {
   CheckCircle2,
   Clock3,
   IndianRupee,
+  XCircle,
 } from "lucide-react";
 import type { CrmRole } from "../app/crm/roles";
 import { roleLabels } from "../app/crm/roles";
 import CustomerManagement from "../app/crm/CustomerManagement";
 import BookingsManagement from "../app/crm/BookingsManagement";
 import LeadWorkspace from "../app/crm/LeadWorkspace";
-import ManagerScheduleBoard from "../app/crm/ManagerScheduleBoard";
 import ReportsDashboard from "../app/crm/ReportsDashboard";
 import StaffManagement from "../app/crm/StaffManagement";
-import TechnicianWorkBoard from "../app/crm/TechnicianWorkBoard";
 import ServiceManagement from "./ServiceManagement";
+import OurProfile from "./ourProfile";
 
 type DashboardBooking = {
   id: string;
@@ -82,12 +82,8 @@ export function CrmModuleRenderer({
     return <ReportsDashboard />;
   }
 
-  if (active === "Schedule") {
-    return <ManagerScheduleBoard />;
-  }
-
   if (active === "Profile") {
-    return <TechnicianWorkBoard />;
+    return <OurProfile />;
   }
 
   return (
@@ -131,6 +127,7 @@ function CrmDashboard({ role }: { role: CrmRole }) {
   }, [loadDashboard]);
 
   const stats = data?.stats;
+  console.log("Dashboard data:", stats);
   const cards = [
     {
       label: "Total Bookings",
@@ -142,6 +139,11 @@ function CrmDashboard({ role }: { role: CrmRole }) {
       label: "Confirmed Bookings",
       value: stats?.confirmedBookings,
       icon: CheckCircle2,
+    },
+    {
+      label: "Cancelled Bookings",
+      value: stats?.cancelledBookings,
+      icon: XCircle,
     },
     {
       label: "Total Booking Value",
@@ -190,7 +192,7 @@ function CrmDashboard({ role }: { role: CrmRole }) {
         </p>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {cards.map(({ label, value, icon: Icon }) => (
           <div
             key={label}

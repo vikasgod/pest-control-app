@@ -705,6 +705,7 @@ export default function ServiceManagement({ role }: { role: CrmRole }) {
                   className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 font-normal outline-none focus:border-emerald-600"
                 />
               </label>
+
               <label className="flex cursor-pointer items-center gap-2 self-end pb-3 text-sm font-semibold text-slate-700">
                 <input
                   type="checkbox"

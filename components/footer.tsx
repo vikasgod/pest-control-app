@@ -12,7 +12,7 @@ function Footer() {
             Professional pest control with a better customer experience.
           </p>
           <div className="flex items-center gap-1 text-sm font-bold">
-            <Phone size={15} /> +91 98765 43210
+            <Phone size={15} /> +91 8268683550
           </div>
           <small className="text-slate-500">24/7 Support</small>
         </div>

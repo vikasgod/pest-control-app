@@ -42,8 +42,6 @@ const managerNav = [
 const technicianNav = [
   ["Dashboard", LayoutDashboard],
   ["Assigned Leads", Users],
-  ["Assigned Jobs", CalendarCheck],
-  ["Job Details", CalendarCheck],
   ["Service Report", TrendingUp],
   ["Profile", Settings],
 ] as const;

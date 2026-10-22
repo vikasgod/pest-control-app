@@ -44,7 +44,7 @@ function CockroachControl() {
     }
   }, [pathName]);
   return (
-    <div className="grid grid-cols-2 gap-6 sm:grid-cols-1 xl:grid-cols-3">
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
       {service.map((item, i) => {
         const price = Number(item.price) || 0;
         const discountPrice =
