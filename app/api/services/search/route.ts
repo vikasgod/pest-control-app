@@ -9,7 +9,6 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const q = searchParams.get("q")?.trim();
-
     if (!q) {
       return NextResponse.json(
         { success: false, message: "Search query is required" },
@@ -23,7 +22,6 @@ export async function GET(req: NextRequest) {
         { "services.name": { $regex: q, $options: "i" } },
       ],
     }).limit(10);
-
     return NextResponse.json({
       success: true,
       count: serviceCategories.length,

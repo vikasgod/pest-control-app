@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState, type Dispatch, type SetStateAction, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   CheckCircle2,
   Clock3,
+  MapPin,
   ShieldCheck,
   X,
-  SlidersHorizontal,
 } from "lucide-react";
 import Link from "next/link";
 import { serviceOptions, timeSlotOptions } from "../lib/technicians";
@@ -44,6 +44,11 @@ type BookingContext = {
   timeSlot: string;
 };
 
+type CatalogResponse = {
+  categories?: ServiceCategory[];
+  error?: string;
+};
+
 type BookingResponse = {
   booking?: { id: string; status: string };
   error?: string;
@@ -57,17 +62,6 @@ export default function ServicesCatalog() {
   const searchParams = useSearchParams();
   const query = searchParams.toString();
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
-  const [openSections, setOpenSections] = useState({
-    property: true,
-    area: false,
-    service: false,
-    serviceType: false,
-  });
-  const [selectedProperties, setSelectedProperties] = useState<string[]>([]);
-  const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
-  const [selectedServices, setSelectedServices] = useState<string[]>([]);
-  const [selectedServiceTypes, setSelectedServiceTypes] = useState<string[]>([]);
-  const [searchText, setSearchText] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [bookingService, setBookingService] = useState<BookingService | null>(
@@ -107,8 +101,8 @@ export default function ServicesCatalog() {
   useEffect(() => {
     const controller = new AbortController();
     setIsLoading(true);
-    // Load the full catalog; search and filtering happen on the client.
-    fetch("/api/services/search", {
+    const serviceName = params.get("service");
+    fetch("/api/services/search?q=" + serviceName, {
       signal: controller.signal,
     })
       .then(async (response) => {
@@ -179,95 +173,7 @@ export default function ServicesCatalog() {
     }
   }
 
-  const propertyOptions = Array.from(
-    new Set(categories.flatMap((category) =>
-      (category.services ?? []).map((service) => service.propertyType).filter(Boolean),
-    )),
-  ).sort();
-
-  const areaOptions = Array.from(
-    new Set(categories.flatMap((category) =>
-      (category.services ?? []).flatMap((service) => service.areaTypes ?? []),
-    )),
-  ).filter(Boolean).sort();
-
-  const serviceOptionsList = Array.from(
-    new Set(categories.map((category) => category.name).filter(Boolean)),
-  ).sort();
-
-  const serviceTypeOptions = Array.from(
-    new Set(categories.flatMap((category) =>
-      (category.services ?? []).map((service) => service.serviceType).filter(Boolean),
-    )),
-  ).sort();
-
-  const filteredCategories = categories
-    .map((category) => ({
-      ...category,
-      services: (category.services ?? []).filter((service) => {
-        const matchesProperty =
-          selectedProperties.length === 0 || selectedProperties.includes(service.propertyType);
-        const matchesArea =
-          selectedAreas.length === 0 ||
-          selectedAreas.some((area) => (service.areaTypes ?? []).includes(area));
-        const matchesService =
-          selectedServices.length === 0 || selectedServices.includes(category.name);
-        const matchesServiceType =
-          selectedServiceTypes.length === 0 || selectedServiceTypes.includes(service.serviceType);
-
-        const searchableText = [
-          category.name,
-          service.name,
-          service.propertyType,
-          service.serviceType,
-          ...(service.areaTypes ?? []),
-        ].filter(Boolean).join(" ").toLowerCase();
-
-        return (
-          matchesProperty &&
-          matchesArea &&
-          matchesService &&
-          matchesServiceType &&
-          searchableText.includes(searchText.trim().toLowerCase())
-        );
-      }),
-    }))
-    .filter((category) => category.services.length > 0);
-
-  const filteredServiceCount = filteredCategories.reduce(
-    (total, category) => total + category.services.length,
-    0,
-  );
-
-  const activeFilterCount =
-    selectedProperties.length +
-    selectedAreas.length +
-    selectedServices.length +
-    selectedServiceTypes.length;
-
-  function toggleSection(section: keyof typeof openSections) {
-    setOpenSections((current) => ({ ...current, [section]: !current[section] }));
-  }
-
-  function toggleFilter(
-    value: string,
-    selected: string[],
-    setSelected: Dispatch<SetStateAction<string[]>>,
-  ) {
-    setSelected((current) =>
-      current.includes(value)
-        ? current.filter((item) => item !== value)
-        : [...current, value],
-    );
-  }
-
-  function clearAllFilters() {
-    setSelectedProperties([]);
-    setSelectedAreas([]);
-    setSelectedServices([]);
-    setSelectedServiceTypes([]);
-    setSearchText("");
-  }
+  console.log("87545", categories);
 
   return (
     <main className="min-h-[calc(100vh-160px)] bg-[#f5f8f7] px-4 py-10 text-[#102a33] sm:px-6">
@@ -328,183 +234,93 @@ export default function ServicesCatalog() {
           </p>
         )}
 
-        {!isLoading && !loadError && categories.length > 0 && (
-          <div className="mt-8 grid grid-cols-1 items-start gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
-            <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:sticky lg:top-6">
-              <div className="mb-5 flex items-center justify-between gap-3">
-                <h2 className="text-xl font-bold text-slate-700">Filter By</h2>
-                <button type="button" onClick={clearAllFilters}
-                  className="rounded-lg bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
-                  Reset
-                </button>
+        {!isLoading &&
+          categories.map((category) => (
+            <section key={category.id} className="mt-8">
+              <div className="mb-4 flex items-center gap-3">
+                <span className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-100 text-emerald-700">
+                  <ShieldCheck size={20} />
+                </span>
+                <h2 className="text-xl font-black">{category.name}</h2>
               </div>
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {category.services.map((service) => {
+                  const price = Number(service.price) || 0;
+                  const discountPrice =
+                    service.discountPrice != null
+                      ? Number(service.discountPrice)
+                      : null;
 
-              <div className="mb-4 flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700">
-                <span className="flex items-center gap-2"><SlidersHorizontal size={16} /> Advanced Filters</span>
-                <span className="text-xs text-slate-500">{activeFilterCount} selected</span>
+                  const hasDiscount =
+                    discountPrice !== null &&
+                    discountPrice >= 0 &&
+                    price > 0 &&
+                    discountPrice < price;
+
+                  const finalPrice = hasDiscount ? discountPrice : price;
+
+                  const discountPercentage = hasDiscount
+                    ? Math.round(((price - discountPrice) / price) * 100)
+                    : 0;
+                  return (
+                    <article
+                      key={service.id}
+                      className="flex flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+                    >
+                      <div className="flex-1">
+                        <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">
+                          {service.serviceType}
+                        </p>
+                        <h3 className="mt-2 text-lg font-black">
+                          {service.name}
+                        </h3>
+                        <p className="mt-1 text-sm text-slate-500">
+                          {service.propertyType} · {service.durationMinutes}{" "}
+                          minutes
+                        </p>
+                        {service.areaTypes.length > 0 && (
+                          <p className="mt-3 text-sm leading-6 text-slate-600">
+                            Areas: {service.areaTypes.join(", ")}
+                          </p>
+                        )}
+                        <p className="mt-4 flex items-center gap-2 text-xs font-medium text-slate-500">
+                          <Clock3 size={15} /> Approx. {service.durationMinutes}{" "}
+                          min
+                        </p>
+                      </div>
+                      <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
+                        <div className="flex items-center gap-2">
+                          {typeof service.discountPrice === "number" && (
+                            <span className="text-sm text-slate-400 line-through">
+                              {formatPrice(service.price)}
+                            </span>
+                          )}
+                          <strong className="text-xl font-black text-emerald-700">
+                            {formatPrice(
+                              service.discountPrice ?? service.price,
+                            )}
+                          </strong>
+                          {hasDiscount && (
+                            <span className="rounded-md bg-emerald-100 px-2 py-1 text-xs font-bold text-emerald-800">
+                              {discountPercentage}% OFF
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          disabled={!hasBookingContext}
+                          onClick={() => openBooking(category, service)}
+                          className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          Book Now
+                        </button>
+                      </div>
+                    </article>
+                  );
+                })}
               </div>
-
-              <div className="border-b border-slate-200 py-4 first:pt-0">
-                <button type="button" onClick={() => toggleSection("property")}
-                  aria-expanded={openSections.property}
-                  className="flex w-full items-center justify-between gap-3 text-left text-lg text-slate-700">
-                  <span>Property Type</span>
-                  <span className="text-2xl leading-none text-slate-400">{openSections.property ? "−" : "+"}</span>
-                </button>
-                {openSections.property && (
-                  <div className="mt-4 space-y-3">
-                    {propertyOptions.length ? propertyOptions.map((property) => (
-                      <label key={property} className="flex cursor-pointer items-start gap-3 text-sm text-slate-700">
-                        <input type="checkbox" checked={selectedProperties.includes(property)}
-                          onChange={() => toggleFilter(property, selectedProperties, setSelectedProperties)}
-                          className="mt-0.5 h-4 w-4 shrink-0 accent-emerald-700" />
-                        <span>{property}</span>
-                      </label>
-                    )) : <p className="text-sm text-slate-400">No property types available.</p>}
-                  </div>
-                )}
-              </div>
-
-              <div className="border-b border-slate-200 py-4">
-                <button type="button" onClick={() => toggleSection("area")}
-                  aria-expanded={openSections.area}
-                  className="flex w-full items-center justify-between gap-3 text-left text-lg text-slate-700">
-                  <span>Area</span>
-                  <span className="text-2xl leading-none text-slate-400">{openSections.area ? "−" : "+"}</span>
-                </button>
-                {openSections.area && (
-                  <div className="mt-4 space-y-3">
-                    {areaOptions.length ? areaOptions.map((area) => (
-                      <label key={area} className="flex cursor-pointer items-start gap-3 text-sm text-slate-700">
-                        <input type="checkbox" checked={selectedAreas.includes(area)}
-                          onChange={() => toggleFilter(area, selectedAreas, setSelectedAreas)}
-                          className="mt-0.5 h-4 w-4 shrink-0 accent-emerald-700" />
-                        <span>{area}</span>
-                      </label>
-                    )) : <p className="text-sm text-slate-400">No areas available.</p>}
-                  </div>
-                )}
-              </div>
-
-              <div className="border-b border-slate-200 py-4">
-                <button type="button" onClick={() => toggleSection("service")}
-                  aria-expanded={openSections.service}
-                  className="flex w-full items-center justify-between gap-3 text-left text-lg text-slate-700">
-                  <span>Service</span>
-                  <span className="text-2xl leading-none text-slate-400">{openSections.service ? "−" : "+"}</span>
-                </button>
-                {openSections.service && (
-                  <div className="mt-4 space-y-3">
-                    {serviceOptionsList.length ? serviceOptionsList.map((service) => (
-                      <label key={service} className="flex cursor-pointer items-start gap-3 text-sm text-slate-700">
-                        <input type="checkbox" checked={selectedServices.includes(service)}
-                          onChange={() => toggleFilter(service, selectedServices, setSelectedServices)}
-                          className="mt-0.5 h-4 w-4 shrink-0 accent-emerald-700" />
-                        <span>{service}</span>
-                      </label>
-                    )) : <p className="text-sm text-slate-400">No services available.</p>}
-                  </div>
-                )}
-              </div>
-
-              <div className="py-4">
-                <button type="button" onClick={() => toggleSection("serviceType")}
-                  aria-expanded={openSections.serviceType}
-                  className="flex w-full items-center justify-between gap-3 text-left text-lg text-slate-700">
-                  <span>Service Type</span>
-                  <span className="text-2xl leading-none text-slate-400">{openSections.serviceType ? "−" : "+"}</span>
-                </button>
-                {openSections.serviceType && (
-                  <div className="mt-4 space-y-3">
-                    {serviceTypeOptions.length ? serviceTypeOptions.map((type) => (
-                      <label key={type} className="flex cursor-pointer items-start gap-3 text-sm text-slate-700">
-                        <input type="checkbox" checked={selectedServiceTypes.includes(type)}
-                          onChange={() => toggleFilter(type, selectedServiceTypes, setSelectedServiceTypes)}
-                          className="mt-0.5 h-4 w-4 shrink-0 accent-emerald-700" />
-                        <span>{type}</span>
-                      </label>
-                    )) : <p className="text-sm text-slate-400">No service types available.</p>}
-                  </div>
-                )}
-              </div>
-            </aside>
-
-            <section className="min-w-0">
-              <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-                <div>
-                  <h2 className="text-xl font-bold text-slate-900">Available Services</h2>
-                  <p className="mt-1 text-sm text-slate-500">
-                    {filteredServiceCount} {filteredServiceCount === 1 ? "service" : "services"} found
-                  </p>
-                </div>
-                <input type="search" value={searchText}
-                  onChange={(event) => setSearchText(event.target.value)}
-                  placeholder="Search services..." aria-label="Search services"
-                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-emerald-600 sm:max-w-xs" />
-              </div>
-
-              {filteredCategories.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">
-                  <SlidersHorizontal size={32} className="mx-auto text-slate-400" />
-                  <h3 className="mt-4 text-lg font-black text-slate-900">No matching services found</h3>
-                  <p className="mt-2 text-sm text-slate-500">Try changing your filters or search for another service.</p>
-                  <button type="button" onClick={clearAllFilters}
-                    className="mt-5 rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-bold text-white hover:bg-emerald-800">
-                    Clear Filters
-                  </button>
-                </div>
-              ) : (
-                filteredCategories.map((category) => (
-                  <section key={category.id} className="mb-8">
-                    <div className="mb-4 flex items-center gap-3">
-                      <span className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-100 text-emerald-700">
-                        <ShieldCheck size={20} />
-                      </span>
-                      <h2 className="text-xl font-black">{category.name}</h2>
-                    </div>
-                    <div className="grid gap-4 md:grid-cols-2">
-                      {category.services.map((service) => {
-                        const price = Number(service.price) || 0;
-                        const discountPrice = service.discountPrice != null ? Number(service.discountPrice) : null;
-                        const hasDiscount = discountPrice !== null && discountPrice >= 0 && price > 0 && discountPrice < price;
-                        const discountPercentage = hasDiscount ? Math.round(((price - discountPrice) / price) * 100) : 0;
-                        const displayPrice = discountPrice !== null && discountPrice >= 0 ? discountPrice : price;
-
-                        return (
-                          <article key={service.id} className="flex flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                            <div className="flex-1">
-                              <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">{service.serviceType}</p>
-                              <h3 className="mt-2 text-lg font-black">{service.name}</h3>
-                              <p className="mt-1 text-sm text-slate-500">{service.propertyType} · {service.durationMinutes} minutes</p>
-                              {(service.areaTypes ?? []).length > 0 && (
-                                <p className="mt-3 text-sm leading-6 text-slate-600">Areas: {service.areaTypes.join(", ")}</p>
-                              )}
-                              <p className="mt-4 flex items-center gap-2 text-xs font-medium text-slate-500">
-                                <Clock3 size={15} /> Approx. {service.durationMinutes} min
-                              </p>
-                            </div>
-                            <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
-                              <div className="flex flex-wrap items-center gap-2">
-                                {hasDiscount && <span className="text-sm text-slate-400 line-through">{formatPrice(price)}</span>}
-                                <strong className="text-xl font-black text-emerald-700">{formatPrice(displayPrice)}</strong>
-                                {hasDiscount && <span className="rounded-md bg-emerald-100 px-2 py-1 text-xs font-bold text-emerald-800">{discountPercentage}% OFF</span>}
-                              </div>
-                              <button type="button" disabled={!hasBookingContext}
-                                onClick={() => openBooking(category, service)}
-                                className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50">
-                                Book Now
-                              </button>
-                            </div>
-                          </article>
-                        );
-                      })}
-                    </div>
-                  </section>
-                ))
-              )}
             </section>
-          </div>
-        )}
+          ))}
       </div>
 
       {bookingService && (
