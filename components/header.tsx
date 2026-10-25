@@ -22,7 +22,7 @@ export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const navLinks = [
     ["Home", "/"],
-    ["Services", "/services"],
+    ["Search", "/search"],
     ["Blog", "/blog"],
   ];
 

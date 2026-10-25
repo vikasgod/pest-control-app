@@ -53,7 +53,7 @@ function Page() {
       <section className="bg-[radial-gradient(circle_at_75%_25%,#d8f7e8,transparent_35%),linear-gradient(120deg,#effaf5,#fff)]">
         <Link href="/search">
           <Image
-            src="/services/Cockroach-Banner.png"
+            src="/services/spider-control.png"
             width={1550}
             height={350}
             alt="spider-control"
